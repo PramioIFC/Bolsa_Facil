@@ -1,145 +1,213 @@
-"""Complementa a prancha existente com referências das capturas e contratos.
-
-Executar na raiz com Python + reportlab + pypdf. Não consulta rede.
-"""
+"""PDF independente, com desenho vetorial e integrações por tela. Sem rede."""
 from pathlib import Path
-from io import BytesIO
+import math
 from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import simpleSplit
-from pypdf import PdfReader, PdfWriter
-
-ROOT = Path(__file__).resolve().parents[2]
-BASE = ROOT / 'output/pdf/bolsa-facil-wireframe.pdf'
-OUT = ROOT / 'output/pdf/bolsa-facil-wireframe-completo.pdf'
-W, H = 1190, 842
-INK, MUTED, PURPLE, BG = '#172039', '#64748B', '#6558F5', '#F0F1F7'
-buf = BytesIO()
-c = canvas.Canvas(buf, pagesize=(W, H))
-c.setTitle('Bolsa Fácil - Wireframe e mapa de endpoints')
-c.setAuthor('Bolsa Fácil')
-
-def box(x,y,w,h,color='#FFFFFF',r=18):
-    c.setFillColor(HexColor(color)); c.roundRect(x,H-y-h,w,h,r,fill=1,stroke=0)
-
+from pypdf import PdfReader
+ROOT=Path(__file__).resolve().parents[2]
+OUT=ROOT/'output/pdf/bolsa-facil-wireframe-completo.pdf'
+REG,BOLD='Helvetica','Helvetica-Bold'
+if Path('C:/Windows/Fonts/segoeui.ttf').exists():
+    pdfmetrics.registerFont(TTFont('UI','C:/Windows/Fonts/segoeui.ttf'))
+    pdfmetrics.registerFont(TTFont('UIBold','C:/Windows/Fonts/segoeuib.ttf'))
+    REG,BOLD='UI','UIBold'
+W,H=1120,840
+INK,MUTED,PURPLE='#252338','#777582','#6554C0'
+BG,SOFT,LINE='#F5F4F7','#EEEBF7','#E5E3EA'
+GREEN,RED='#23765B','#B14C59'
+c=canvas.Canvas(str(OUT),pagesize=(W,H),pageCompression=1)
+c.setTitle('Bolsa Fácil | Telas e integrações'); c.setAuthor('Bolsa Fácil')
+OX,OY,S=0,0,1
+def origin(x=0,y=0,s=1):
+    global OX,OY,S
+    OX,OY,S=x,y,s
+def pt(x,y): return OX+S*x,H-OY-S*y
+def box(x,y,w,h,color='#FFFFFF',r=18,stroke=None):
+    c.setFillColor(HexColor(color)); c.setStrokeColor(HexColor(stroke or color)); c.setLineWidth(.8*S)
+    c.roundRect(*pt(x,y+h),w*S,h*S,r*S,fill=1,stroke=bool(stroke))
 def text(x,y,s,size=14,color=INK,bold=False):
-    c.setFillColor(HexColor(color)); c.setFont('Helvetica-Bold' if bold else 'Helvetica',size)
-    c.drawString(x,H-y-size,s)
+    c.setFillColor(HexColor(color)); c.setFont(BOLD if bold else REG,size*S); c.drawString(*pt(x,y+size),s)
+def right(x,y,s,size=14,color=INK,bold=False):
+    c.setFillColor(HexColor(color)); c.setFont(BOLD if bold else REG,size*S); c.drawRightString(*pt(x,y+size),s)
+def para(x,y,s,width,size=14,color=MUTED):
+    lines=simpleSplit(s,REG,size,width)
+    for i,t in enumerate(lines): text(x,y+i*(size+7),t,size,color)
+    return y+len(lines)*(size+7)
+def line(points,color=LINE,width=1):
+    c.setStrokeColor(HexColor(color)); c.setLineWidth(width*S); c.setLineCap(1); c.setLineJoin(1)
+    p=c.beginPath(); p.moveTo(*pt(*points[0]))
+    for pair in points[1:]: p.lineTo(*pt(*pair))
+    c.drawPath(p)
+def circle(x,y,r,color):
+    c.setFillColor(HexColor(color)); c.circle(*pt(x,y),r*S,fill=1,stroke=0)
+def icon(x,y,kind,color=MUTED,size=20):
+    if kind=='star':
+        points=[]
+        for i in range(11):
+            a=-math.pi/2+i*math.pi/5; r=size*(.48 if i%2==0 else .22)
+            points.append((x+size/2+r*math.cos(a),y+size/2+r*math.sin(a)))
+        if color=='#AD8439':
+            p=c.beginPath(); p.moveTo(*pt(*points[0]))
+            for pair in points[1:]: p.lineTo(*pt(*pair))
+            p.close(); c.setFillColor(HexColor(color)); c.drawPath(p,fill=1,stroke=0)
+        else: line(points,color,1.5)
+    elif kind=='search':
+        c.setStrokeColor(HexColor(color)); c.setLineWidth(1.8*S); c.circle(*pt(x+8,y+8),7*S,stroke=1,fill=0)
+        line([(x+13,y+13),(x+20,y+20)],color,1.8)
+    elif kind=='chart':
+        line([(x+2,y+17),(x+8,y+10),(x+13,y+13),(x+20,y+4)],color,1.8)
+        line([(x+14,y+4),(x+20,y+4),(x+20,y+10)],color,1.8)
+    elif kind=='wallet':
+        line([(x+20,y+4),(x+2,y+4),(x+2,y+19),(x+20,y+19),(x+20,y+4)],color,1.6)
+        line([(x+20,y+9),(x+13,y+9),(x+13,y+15),(x+20,y+15)],color,1.6)
+    elif kind=='user':
+        c.setStrokeColor(HexColor(color)); c.setLineWidth(1.6*S); c.circle(*pt(x+11,y+5),4*S,fill=0,stroke=1)
+        line([(x+3,y+19),(x+3,y+17),(x+7,y+13),(x+15,y+13),(x+19,y+17),(x+19,y+19),(x+3,y+19)],color,1.6)
+    elif kind=='back': line([(x+15,y+2),(x+5,y+11),(x+15,y+20)],color,1.8)
+    elif kind=='arrow': line([(x+5,y+3),(x+13,y+11),(x+5,y+19)],color,1.5)
+    elif kind=='eye':
+        line([(x,y+10),(x+5,y+5),(x+15,y+5),(x+20,y+10),(x+15,y+15),(x+5,y+15),(x,y+10)],color,1.3)
+        circle(x+10,y+10,2.5,color)
+def tag(x,y,n):
+    circle(x,y,11,PURPLE); text(x-4,y-9,str(n),12,'#FFFFFF',True)
+def button(y,label):
+    box(24,y,342,52,PURPLE,15); tw=pdfmetrics.stringWidth(label,BOLD,15)
+    text((390-tw)/2,y+15,label,15,'#FFFFFF',True)
+def field(y,label,value,eye=False):
+    text(25,y,label,12,MUTED); box(24,y+26,342,53,'#FFFFFF',13,LINE); text(40,y+41,value,15)
+    if eye: icon(330,y+43,'eye')
+def nav(active):
+    box(1,699,388,80,'#FFFFFF',24); line([(20,699),(370,699)])
+    for i,(label,kind) in enumerate(zip(['Início','Favoritas','Carteira','Conta'],['chart','star','wallet','user'])):
+        x=24+i*96
+        if i==active: box(x,708,55,33,SOFT,13)
+        icon(x+17,715,kind,PURPLE if i==active else MUTED)
+        text(x+8,747,label,11,PURPLE if i==active else MUTED,i==active)
+def tile(y,ticker,name,price,change,positive=True,star=False):
+    box(24,y,342,86,'#FFFFFF',18); box(39,y+20,44,44,SOFT,13)
+    text(48,y+32,ticker[:2],14,PURPLE,True); text(96,y+17,ticker,17,INK,True); text(96,y+46,name,11,MUTED)
+    right(326 if not star else 315,y+18,'R$ '+price,16,INK,True)
+    right(326 if not star else 315,y+46,change,12,GREEN if positive else RED,True)
+    if star: icon(335,y+31,'star','#AD8439' if star is True else MUTED,17)
+def shell(title):
+    origin(); box(0,0,W,H,'#FAF9FB',0); text(55,28,'Bolsa Fácil',17,INK,True)
+    right(1064,32,'DESIGN / 30.09.2026',10,MUTED); line([(55,68),(1065,68)])
+    text(483,114,title,32,INK,True); text(483,166,'TELA E INTEGRAÇÕES',10,PURPLE,True)
+    text(55,807,'Estudo visual · dados ilustrativos · compra educacional',10,MUTED)
+    right(1065,807,f'{c.getPageNumber():02d} / 09',10,MUTED)
+    box(61,99,353,697,'#E6E3EA',32); origin(66,104,.88); box(0,0,390,780,BG,30)
+    text(24,17,'9:41',12,INK,True); line([(333,25),(337,21),(341,25)],INK,1.6); box(348,20,19,9,INK,3)
+def note(y,n,title,method,desc):
+    origin(); tag(497,y+13,n); text(523,y,title,17,INK,True); box(483,y+43,577,57,SOFT,13)
+    for i,t in enumerate(simpleSplit(method,REG,13,540)): text(500,y+54+i*19,t,13,PURPLE)
+    para(483,y+115,desc,560,15)
+def foot(s):
+    origin(); para(483,717,s,560,12,MUTED)
+def end(): origin(); c.showPage()
 
-def para(x,y,s,width=635,size=15,color=MUTED):
-    lines=simpleSplit(s,'Helvetica',size,width)
-    for i,line in enumerate(lines): text(x,y+i*(size+8),line,size,color)
-    return y+len(lines)*(size+8)
+shell('Entrar')
+box(24,132,52,52,PURPLE,15); icon(39,148,'chart','#FFFFFF')
+text(24,217,'Bem-vindo de volta.',28,INK,True); text(24,261,'Entre para acompanhar sua carteira.',14,MUTED)
+field(319,'E-mail','ana@exemplo.com'); field(421,'Senha','••••••••',True)
+button(546,'Entrar'); tag(351,571,1); text(91,626,'Ainda não tem conta? Criar conta',13,PURPLE)
+tag(351,667,2)
+note(231,1,'Botão Entrar','Local · database.login(email, password)','Valida as credenciais no SQLite e salva a sessão neste dispositivo. Durante o envio, o botão mostra progresso; erros aparecem no formulário.')
+note(450,2,'Após entrar: carregar o mercado','GET /quote/{ticker}','Após autenticação local, refresh() consulta as cotações de cada ativo e carrega favoritas e posições. A lista é exibida no Início.')
+foot('Sem endpoint HTTP de login. Bases GET: Web localhost:8081/api; nativo brapi.dev/api. O marcador 2 indica o próximo passo do fluxo.'); end()
 
-def page(title,sub):
-    box(0,0,W,H,'#F7F8FC',0); box(0,0,W,72,INK,0)
-    text(40,22,'BOLSA FÁCIL',22,'#FFFFFF',True)
-    text(800,27,'WIREFRAME / TELAS E INTEGRAÇÕES',12,'#FFFFFF')
-    text(420,108,title,28,INK,True); para(420,153,sub,size=13)
-    text(40,807,'30/09/2026 | Dados fictícios | Referência visual + contratos verificados no código',11)
+shell('Criar conta')
+icon(26,68,'back'); text(24,133,'Comece por aqui.',29,INK,True); text(24,178,'Crie sua conta no Bolsa Fácil.',14,MUTED)
+field(239,'Nome','Ana Silva'); field(341,'E-mail','ana@exemplo.com'); field(443,'Senha','••••••••',True)
+text(25,529,'Use pelo menos 6 caracteres.',11,MUTED); button(573,'Criar conta'); tag(351,599,1)
+text(105,653,'Já tem conta? Entrar',13,PURPLE); tag(351,692,2)
+note(231,1,'Botão Criar conta','Local · database.register(name, email, password)','Valida os dados e cria a conta e a sessão no armazenamento local. Campos inválidos recebem uma mensagem no formulário.')
+note(450,2,'Após criar: carregar o mercado','GET /quote/{ticker}','Executa refresh() para abrir o Início com cotações. Nome, e-mail e senha não são enviados à brapi.')
+foot('Conta local ao dispositivo. Não existe endpoint HTTP de cadastro. O marcador 2 indica o próximo passo do fluxo.'); end()
 
-def phone(): box(38,108,340,674,BG,25)
-def card(y,h): box(52,y,312,h)
-def ptxt(y,s,size=16,color=INK,bold=False): text(68,y,s,size,color,bold)
-def nav(selected):
-    box(38,711,340,71,'#EFECF5',0)
-    for i,name in enumerate(['Início','Favoritas','Carteira','Conta']):
-        x=48+i*82
-        if i==selected: box(x,722,72,26,'#E4DFF9',13)
-        text(x+12,727,['I','*','C','U'][i],14,PURPLE if i==selected else MUTED,True)
-        text(x+7,758,name,10,MUTED)
-
-page('10 / Início conforme as prints','Complemento visual das capturas. A página 03 representa a implementação atual.')
-phone(); box(54,132,44,44,PURPLE,13); text(65,140,'BF',22,'#FFFFFF',True)
-text(109,130,'Bolsa Fácil',24,INK,True); text(109,162,'Invista conhecimento primeiro',11,MUTED)
-card(201,47); ptxt(215,'Buscar ação, ex: PETR4',16,MUTED)
-box(52,266,312,76,'#EEEBFF',17)
-for x,label,value in [(66,'Dólar','R$ 5,18'),(165,'Selic','13,75% a.a.'),(264,'IPCA 12m','4,22%')]:
-    text(x,282,label,10,MUTED,True); text(x,304,value,13,INK,True)
-ptxt(367,'Ações em destaque',18,INK,True)
-for i,(ticker,name,price,variation,positive) in enumerate([
-    ('PETR4','Petrobras','49,10','+0,78%',True),('VALE3','Vale S.A.','69,61','-2,18%',False),
-    ('ITUB4','Itaú Unibanco','42,30','+1,41%',True)]):
-    y=402+i*95; card(y,82); box(65,y+16,42,46,'#F0EFFF',13)
-    text(76,y+29,ticker[:2],14,PURPLE,True); text(120,y+15,ticker,17,INK,True)
-    text(120,y+46,name,12,MUTED); text(259,y+17,'R$ '+price,14,INK,True)
-    text(274,y+46,variation,12,'#087F4B' if positive else '#CB3047',True)
+shell('Início')
+text(24,65,'Bolsa Fácil',25,INK,True); icon(341,73,'chart',PURPLE); text(24,105,'Cotações e ações',13,MUTED)
+box(24,157,342,54,'#FFFFFF',16); icon(41,174,'search'); text(75,173,'Buscar ação',15,MUTED); tag(351,184,1)
+text(24,251,'Ações em destaque',20,INK,True); tag(351,263,2)
+for i,args in enumerate([('PETR4','Petrobras','49,10','+0,78%',True),('VALE3','Vale','69,61','-2,18%',False),('ITUB4','Itaú Unibanco','42,30','+1,41%',True),('MGLU3','Magazine Luiza','6,63','-1,05%',False)]): tile(294+i*96,*args,star='outline')
 nav(0)
-text(420,228,'COTAÇÕES / IMPLEMENTADO',13,PURPLE,True)
-box(420,261,720,58,'#EEEBFF'); text(439,280,'GET /api/quote/{ticker}',18,PURPLE,True)
-para(420,342,'Carrega uma ação por requisição. Busca usa cache quando disponível; fora do cache, acrescenta range=3mo&interval=1d. Abrir o ativo consulta o histórico novamente.')
-text(420,460,'INDICADORES MACRO / SOMENTE NAS PRINTS',13,PURPLE,True)
-para(420,493,'Dólar, Selic e IPCA 12m são preservados nesta composição. Não há chamadas, modelos ou widgets correspondentes no código atual. Os números são exemplos visuais, não dados atuais.')
-para(420,615,'Endpoint: ainda não definido no projeto. Para implementar, definir provedor, moeda, periodicidade, data de referência e tratamento de indisponibilidade. Esta entrega não adiciona integração ao app.')
-c.showPage()
+note(231,1,'Campo de busca','GET /quote/{ticker}?range=3mo&interval=1d','Consulta uma ação fora do cache. Retorna nome, preço, variação e histórico. Normaliza o ticker para maiúsculas. Se já estiver no cache, a busca usa os dados em memória.')
+note(450,2,'Lista de ações e atualização','GET /quote/{ticker}','Uma consulta por ticker. Preenche os cards e atualiza as cotações ao puxar a lista. Reúne ações padrão, favoritas e posições, sem duplicatas. A estrela grava localmente, como na tela Favoritas.')
+foot('Removido o painel Dólar / Selic / IPCA, sem integração no código atual. Falha de carga: mensagem e Tentar novamente.'); end()
 
-page('11 / Empresa, dividendos e compra','Continuação de detalhes baseada nas prints 05 e 08. Valores apenas ilustrativos.')
-phone(); ptxt(129,'<    PETR4',23,INK,True)
-card(179,157); ptxt(196,'Saúde da Empresa',18,INK,True)
-for x,y,label,value in [(69,235,'P/L','5,22'),(172,235,'P/VP','1,32'),(269,235,'Margem','24,4%'),(69,287,'V. Mercado','663,1 bi'),(172,287,'Dívida','676,3 bi'),(269,287,'Caixa','53,8 bi')]:
-    text(x,y,label,10,MUTED); text(x,y+18,value,13,INK,True)
-card(351,158); ptxt(370,'Dividendos',18,INK,True); ptxt(404,'Dividend Yield: 7,00%',15,INK,True)
-para(68,438,'Com R$ 1.000, projeção ilustrativa de R$ 70 em proventos nos próximos 12 meses.',275,12)
-card(526,242); ptxt(543,'Compra simulada',18,INK,True); ptxt(580,'Quantidade: 1',14)
-box(68,611,280,61,'#EEEBFF',16); ptxt(620,'Cotação: R$ 49,10',11,MUTED); ptxt(640,'Total: R$ 49,10',18,INK,True)
-box(68,689,280,43,'#5D568D',22); text(152,701,'Comprar agora',14,'#FFFFFF',True)
-ptxt(742,'Simulação educacional - sem ordem real.',10,MUTED)
-text(420,220,'DADOS DA EMPRESA',13,PURPLE,True)
-para(420,255,'O modelo atual consome marketCap e currency, exibidos na página 04. P/L, P/VP, margem, dívida, caixa e dividend yield não são consumidos pelo modelo Stock nem exibidos na tela atual.')
-text(420,386,'DIVIDENDOS / INTEGRAÇÃO PENDENTE',13,PURPLE,True)
-para(420,420,'Não existe endpoint implementado para esses blocos. O desenho preserva a referência enviada; o contrato com um provedor deve ser definido antes da implementação. A projeção ilustrativa é investimento x DY e não garante pagamentos futuros.')
-text(420,562,'COMPRA / IMPLEMENTADO LOCALMENTE',13,PURPLE,True)
-box(420,595,720,55,'#EEEBFF'); text(439,613,'AppState.buy(symbol, quantity, price)',17,PURPLE,True)
-para(420,675,'Grava a posição no SQLite e recalcula o preço médio ponderado. Quantidade inválida desativa a compra. Exibe confirmação após salvar. Não há endpoint de ordens.')
-c.showPage()
+shell('Favoritas')
+text(24,70,'Favoritas',29,INK,True); text(24,117,'As ações que você quer acompanhar.',13,MUTED)
+tile(173,'PETR4','Petrobras','49,10','+0,78%',True,True); tag(369,213,1)
+tile(271,'VALE3','Vale','69,61','-2,18%',False,True); tag(24,168,2); nav(1)
+note(231,1,'Estrela de cada ação','Local · database.setFavorite(userId, symbol, enabled)','Adiciona ou remove o ticker da conta. A lista é lida por favoritesFor(userId). A estrela não faz uma requisição HTTP.')
+note(450,2,'Preços dos cards: puxar para atualizar','GET /quote/{ticker}','Atualiza cotações via refresh(). Abrir a aba usa o cache existente; tocar em uma ação abre detalhes e consulta o histórico.')
+foot('Lista vazia: “Nenhuma favorita ainda”. Removido o card explicativo permanente.'); end()
 
-page('12 / Mapa de navegação','Fluxos para implementação e revisão. Todas as telas usam exemplos fictícios.')
-text(52,132,'Percurso principal',22,INK,True)
-for i,s in enumerate(['Entrar / Criar conta','Início / Buscar ticker','Detalhes / Histórico','Compra simulada','Carteira / Editar posição','Conta / Sair']):
-    box(52,184+i*83,310,58,'#EEEBFF',15); text(71,201+i*83,f'{i+1:02d}   {s}',15,PURPLE,True)
-text(420,234,'NAVEGAÇÃO',13,PURPLE,True)
-para(420,268,'Login e cadastro levam ao Início após autenticação local. As abas Início, Favoritas, Carteira e Conta compartilham a navegação inferior. Tocar numa ação abre detalhes; voltar retorna à tela de origem.')
-para(420,382,'Favoritar grava por conta, sem HTTP. Compra adiciona ou acumula uma posição. Carteira permite adicionar, editar e remover posições. Sair limpa a sessão e retorna à autenticação.')
-text(420,503,'ESTADOS A REVISAR',13,PURPLE,True)
-para(420,536,'Carga inicial e histórico: indicador de progresso. Falha inicial: mensagem e Tentar novamente. Favoritas/carteira vazias: orientação. Autenticação: validação e erro. Compra: envio desativado durante gravação e mensagem de sucesso.')
-para(420,673,'As páginas 01-09 reutilizam a prancha existente no repositório. As páginas 10-11 acrescentam os blocos presentes nas prints e distinguem o que ainda não foi implementado.')
-c.showPage()
+shell('Detalhes da ação')
+icon(24,64,'back'); text(61,60,'PETR4',22,INK,True); icon(340,64,'star','#AD8439')
+text(24,118,'Petrobras',14,MUTED); text(24,151,'R$ 49,10',37,INK,True)
+box(255,161,111,32,'#E4F0EA',11); text(274,168,'+0,78%',14,GREEN,True)
+box(24,234,342,322,'#FFFFFF',20); text(42,253,'Histórico',18,INK,True); tag(349,267,1)
+for i,label in enumerate(['5 dias','1 mês','3 meses','1 ano']):
+    x=42+i*78; box(x,293,71,33,SOFT if i==2 else '#F5F4F7',10); text(x+9,302,label,11,PURPLE if i==2 else MUTED,i==2)
+for y in [364,408,452,496]: line([(42,y),(348,y)],'#EEEDEF')
+points=[(42+i*12,485-v) for i,v in enumerate([0,8,4,23,40,34,51,65,49,58,76,83,77,98,89,105,117,101,125,142,134,152,141,158,155,170])]
+p=c.beginPath(); p.moveTo(*pt(42,504))
+for point in points: p.lineTo(*pt(*point))
+p.lineTo(*pt(342,504)); p.close(); c.setFillColor(HexColor('#EAF4EF')); c.drawPath(p,fill=1,stroke=0); line(points,GREEN,2.2)
+text(42,526,'02 jul',10,MUTED); text(171,526,'17 ago',10,MUTED); right(346,526,'30 set',10,MUTED)
+box(24,575,342,73,'#FFFFFF',18); text(42,590,'Valor de mercado',11,MUTED); text(42,610,'R$ 663,1 bi',17,INK,True); text(270,590,'Moeda',11,MUTED); text(270,610,'BRL',17,INK,True)
+button(684,'Simular compra'); tag(351,710,2)
+note(231,1,'Cotação, gráfico e valor de mercado','GET /quote/{ticker}?range=3mo&interval=1d','Consultado ao abrir a ação. Os períodos usam range=5d, 1mo, 3mo ou 1y, com interval=1d. historicalDataPrice fornece datas e fechamentos; marketCap preenche o valor de mercado.')
+note(470,2,'Botão Simular compra','Navegação · abrir área de compra','Abre quantidade e total da mesma ação, na próxima página. É uma proposta de composição: a compra atual fica no conteúdo rolável de detalhes. A estrela usa setFavorite localmente.')
+foot('Removidos P/L, P/VP, dívida, caixa e dividendos: os blocos das prints não são consumidos pelo modelo atual.'); end()
 
-page('13 / Contrato de consulta','Mapa extraído do serviço, estado, modelo e proxy locais. Não houve consulta de mercado.')
-text(52,219,'BASES',14,PURPLE,True)
-para(52,253,'Web: http://localhost:8081/api',330,14)
-para(52,318,'Nativo / upstream: https://brapi.dev/api',330,14)
-para(52,396,'BRAPI_BASE_URL pode substituir a base. Web usa proxy local; credencial adicionada no servidor. Não colocar token no protótipo.',330,14)
-text(52,567,'FONTES NO REPOSITÓRIO',13,PURPLE,True)
-for i,s in enumerate(['lib/services/brapi_service.dart','lib/state/app_state.dart','lib/models/stock.dart','lib/database/app_database.dart','tool/brapi_proxy.dart']): text(52,602+i*26,s,12,MUTED)
-text(420,225,'REQUISIÇÕES GET',13,PURPLE,True)
-for i,s in enumerate(['/quote/PETR4','/quote/PETR4?range=5d&interval=1d','/quote/PETR4?range=1mo&interval=1d','/quote/PETR4?range=3mo&interval=1d','/quote/PETR4?range=1y&interval=1d']):
-    text(420,258+i*29,s,16,INK,True)
-para(420,420,'Caminhos relativos à base acima. A resposta contém results[]. O cliente usa a primeira ação retornada por consulta individual.',size=14)
-text(420,501,'CAMPOS CONSUMIDOS',13,PURPLE,True)
-para(420,535,'symbol; longName ou shortName; regularMarketPrice; regularMarketChangePercent; logourl; currency; marketCap; historicalDataPrice[].date e .close.',size=14)
-para(420,621,'date: timestamp Unix em segundos. Fechamentos não positivos são filtrados. Falta de marketCap exibe ausência. Atualização reúne oito tickers padrão, favoritas e carteira, sem duplicatas.',size=14)
-para(420,713,'Login, cadastro, perfil, favoritas e carteira são locais. Não existem endpoints HTTP de autenticação ou ordens no projeto.',size=14)
-c.showPage(); c.save()
+shell('Compra simulada')
+icon(24,64,'back'); text(61,60,'Simular compra',22,INK,True)
+box(24,130,342,96,'#FFFFFF',18); text(43,150,'PETR4',20,INK,True); text(43,185,'Petrobras',13,MUTED); right(345,157,'R$ 49,10',20,INK,True); tag(351,213,1)
+text(24,277,'Quantidade de ações',14,INK,True); box(24,313,342,71,'#FFFFFF',16,LINE); text(44,331,'10',26,INK,True)
+box(24,424,342,114,SOFT,18); text(43,443,'Total da simulação',13,MUTED); text(43,474,'R$ 491,00',31,INK,True)
+button(579,'Adicionar à carteira'); tag(351,605,2); para(46,654,'Simulação educacional. Nenhuma ordem real será enviada.',298,12)
+note(231,1,'Preço da ação e cálculo do total','GET /quote/{ticker}?range=3mo&interval=1d','O preço vem da consulta feita em detalhes: regularMarketPrice. Alterar a quantidade recalcula quantidade × cotação; não consulta um novo endpoint.')
+note(450,2,'Botão Adicionar à carteira','Local · AppState.buy(symbol, quantity, price)','Salva a posição pelo preço exibido. Se já existir, soma as ações e recalcula o preço médio ponderado. Usa savePosition no SQLite. Quantidade inválida desativa o botão; sucesso exibe confirmação.')
+foot('Não há endpoint de ordens. A área separada simplifica a apresentação; não altera o código do app.'); end()
 
-writer=PdfWriter()
-for reader in [PdfReader(BASE),PdfReader(buf)]:
-    for p in reader.pages:
-        n=len(writer.pages)+1
-        footer=BytesIO()
-        pw,ph=float(p.mediabox.width),float(p.mediabox.height)
-        stamp=canvas.Canvas(footer,pagesize=(pw,ph))
-        stamp.setFillColor(HexColor('#F7F8FC'))
-        stamp.rect(pw-112,8,100,28,fill=1,stroke=0)
-        stamp.setFillColor(HexColor(MUTED)); stamp.setFont('Helvetica',10)
-        stamp.drawRightString(pw-38,18,f'{n} / 13')
-        stamp.save(); p.merge_page(PdfReader(footer).pages[0])
-        writer.add_page(p)
-writer.add_metadata({'/Title':'Bolsa Fácil - Wireframe de alta fidelidade e endpoints'})
-with OUT.open('wb') as f: writer.write(f)
-check=PdfReader(OUT)
-assert len(check.pages)==13
-content='\n'.join(p.extract_text() for p in check.pages)
-for term in ['range=5d','range=1mo','range=3mo','range=1y','Dividendos','IPCA','historicalDataPrice']:
+shell('Carteira')
+text(24,66,'Carteira',29,INK,True); text(24,112,'Sua simulação de investimentos.',13,MUTED)
+box(24,167,342,190,'#353047',22); text(44,189,'Valor atual',13,'#CFC8E2'); text(44,221,'R$ 1.256,71',36,'#FFFFFF',True); tag(351,198,1)
+text(44,297,'Investido',11,'#CFC8E2'); text(220,297,'Resultado',11,'#CFC8E2'); text(44,320,'R$ 1.256,71',17,'#FFFFFF',True); text(220,320,'R$ 0,00',17,'#FFFFFF',True)
+text(24,400,'Posições',20,INK,True); right(363,406,'+ Adicionar',12,PURPLE,True)
+for i,(ticker,desc,value) in enumerate([('PETR4','10 ações · PM R$ 49,10','491,00'),('VALE3','11 ações · PM R$ 69,61','765,71')]):
+    y=443+i*97; box(24,y,342,85,'#FFFFFF',18); text(43,y+17,ticker,18,INK,True); text(43,y+47,desc,11,MUTED); right(319,y+20,'R$ '+value,17,INK,True)
+    icon(337,y+31,'arrow'); text(336,y+53,'···',17,MUTED,True)
+tag(369,509,2); nav(2)
+note(231,1,'Resumo e valores de cada posição','Cache · cotações de GET /quote/{ticker}','Lê positionsFor(userId) no SQLite. O valor atual usa quantidade × cotação em cache; sem cotação, usa preço médio. Abrir a aba não dispara HTTP. Resultado = valor atual - investido.')
+note(450,2,'Menu da posição: editar ou remover','Local · savePosition / removePosition','Altera quantidade e preço médio ou remove a posição. Se o ticker salvo estiver ausente do cache, refresh() consulta GET /quote/{ticker} para o conjunto completo.')
+foot('Toque no ativo para detalhes; use o menu para editar. Adicionar abre o formulário de nova posição e usa savePosition.'); end()
+
+shell('Editar posição')
+icon(24,64,'back'); text(61,60,'Editar posição',22,INK,True); text(24,136,'PETR4',29,INK,True); text(24,182,'Petrobras',14,MUTED)
+field(265,'Quantidade','10'); field(377,'Preço médio','R$ 49,10'); button(520,'Salvar alterações'); tag(351,546,1)
+text(144,610,'Remover posição',13,RED); tag(351,620,2)
+note(231,1,'Botão Salvar alterações','Local · database.savePosition(userId, item)','Grava quantidade e preço médio na conta. Ambos devem ser maiores que zero. O ticker fica fixo na edição. Para adicionar uma posição, o formulário permite informar o ticker.')
+note(450,2,'Remover posição','Local · database.removePosition(userId, symbol)','Remove a posição da carteira local. Não envia ordem de venda nem faz uma consulta HTTP.')
+foot('Novo ticker fora do cache: salvar dispara refresh(), usando GET /quote/{ticker}. A edição usa os dados carregados.'); end()
+
+shell('Conta')
+text(24,70,'Sua conta',29,INK,True); box(24,147,342,129,'#FFFFFF',20); circle(79,208,30,SOFT); text(67,189,'A',27,PURPLE,True)
+text(130,179,'Ana Silva',20,INK,True); text(130,215,'ana@exemplo.com',13,MUTED); tag(351,257,1)
+para(25,324,'Sua carteira e favoritas ficam salvas neste dispositivo.',330,14)
+box(24,431,342,52,'#FFFFFF',15,LINE); text(136,447,'Sair da conta',14,INK,True); tag(351,457,2); nav(3)
+note(231,1,'Nome e e-mail','Local · restoreSession() / currentUser','O perfil vem da conta local restaurada na inicialização. Carteira e favoritas são separadas por usuário. Não há endpoint de perfil.')
+note(450,2,'Botão Sair da conta','Local · database.logout()','Remove a sessão e limpa o estado em memória, retornando ao login. Não existe endpoint HTTP de logout.')
+foot('Bases GET: Web http://localhost:8081/api; nativo https://brapi.dev/api. BRAPI_BASE_URL substitui a base. No Web, o proxy adiciona a credencial.'); end()
+c.save()
+pdf=PdfReader(OUT); assert len(pdf.pages)==9
+for i,p in enumerate(pdf.pages):
+    content=p.extract_text(); assert 'Local' in content or 'GET /quote/' in content,i
+content='\n'.join(p.extract_text() for p in pdf.pages)
+for term in ['range=3mo&interval=1d','range=5d','database.logout()','database.login']:
     assert term in content,term
-print(f'PASS: {len(check.pages)} páginas; telas, referências e contratos presentes. {OUT}')
+print('PASS: 9 páginas, integrações por tela e períodos verificados.')
