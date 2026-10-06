@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/stock.dart';
 import '../theme.dart';
+import '../utils/format.dart';
 
 class StockTile extends StatelessWidget {
   const StockTile({
@@ -37,9 +38,9 @@ class StockTile extends StatelessWidget {
               ]),
             ),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(_money(stock.price), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ink)),
+              Text(formatMoney(stock.price), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ink)),
               const SizedBox(height: 4),
-              Text('${up ? '+' : ''}${stock.changePercent.toStringAsFixed(2)}%', style: TextStyle(color: up ? positive : negative, fontWeight: FontWeight.w700)),
+              Text(formatPercent(stock.changePercent), style: TextStyle(color: up ? positive : negative, fontWeight: FontWeight.w700)),
             ]),
             const SizedBox(width: 6),
             IconButton(
@@ -81,5 +82,5 @@ class _Logo extends StatelessWidget {
   }
 }
 
-String money(double value) => _money(value);
-String _money(double value) => 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}';
+/// Atalho usado pelas telas para formatar valores em reais (pt-BR).
+String money(double value) => formatMoney(value);

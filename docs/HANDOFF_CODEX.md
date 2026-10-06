@@ -1,0 +1,68 @@
+# Handoff para o Codex — Bolsa Fácil
+
+## Contexto
+
+Aplicativo Flutter (Dart 3) para acompanhar ações da B3 via [brapi.dev](https://brapi.dev/), com favoritos e carteira simulada (compra, venda, histórico, lucro realizado, backup JSON). SQLite local em todas as plataformas (nativo: arquivo; Web: Wasm no navegador). Proxy Dart (`tool/brapi_proxy.dart`) só para a Web.
+
+**Restrições:** manter Flutter, brapi e SQLite. UI e mensagens em português do Brasil. Nunca commitar `.env` nem `config/dart_defines.json`. Sem `kIsWeb` no `AppState` (diferenças de plataforma ficam em `lib/database/db_factory*.dart` e `BrapiService`).
+
+Leia, nesta ordem: `TECHNICAL_DOCS.md` (arquitetura atual), `MELHORIAS.md` (o que mudou).
+
+## Estado atual — verificado em 05/10/2026
+
+| Verificação | Resultado |
+|---|---|
+| `flutter pub get` e setup SQLite Web | passaram (`sqflite_common_ffi_web 1.2.0`) |
+| `flutter analyze` | No issues found |
+| `flutter test` | 62 testes passaram |
+| Build Web release (base 8080 e 8081) | passou |
+| Web em uso real | cadastro, favorito, compra/venda/histórico, F5 com sessão/carteira e cache sem proxy passaram |
+| Autocomplete na API real | `stocks[].stock/name/logo` confirmado; `/v2/tickers` também respondeu, mas o endpoint atual foi mantido |
+| Proxy com curl (8081) | health/cotação/autocomplete 200, rota 404, POST 405, origem proibida 403 |
+| Windows release / APK Android debug | builds passaram |
+| SQLite Windows e Android | `tool/platform_smoke.dart`: sessão, favoritos, operações, resultado realizado, backup e login passaram |
+| Migração v1 real | cópia do banco local testada; original preservado |
+
+## Verificações iniciais e correções
+
+A v2 anexada foi incorporada ao checkout com autorização do usuário, preservando `.git`, `.env` e os wireframes previamente staged. O ZIP tinha 57 testes ao executar; o relato de 53 era anterior. Foram acrescentados quatro testes de UI e um de migração legada.
+
+- Fábricas antigas sem consumidores foram removidas para manter analyze limpo.
+- Schema v3 converte `session(slot)` da versão original em `sessions(id)` durante o upgrade. Teste sintético valida posições/histórico, e teste com uma cópia do banco v1 real valida integridade e preservação de conta/sessão.
+- Importação de backup corrigida: o controller pertence a um diálogo StatefulWidget e é descartado após a rota sair, evitando uso após dispose.
+- Android corrigido para AGP 8.11.1 / Kotlin 2.2.20 / Gradle 8.14. Builds passam com avisos de atualização futura, sem bypass de validação.
+- A porta 8080 pertence a outro serviço. `run_web.ps1` usa 8081 (ou `-ProxyPort`) e passa a mesma base ao Flutter; readiness e cleanup de processo próprio foram verificados. O proxy usa somente bibliotecas padrão, então o script inicia a VM sem build hooks desnecessários de SQLite.
+
+**Limite da verificação:** o smoke nativo testa a implementação SQLite real e dados; não foi feita revisão visual completa das telas Android/Windows. Os fluxos de UI foram exercitados em widgets e no Web. O banco real disponível tinha uma conta e nenhuma posição; a preservação de posições é coberta pelo banco legado sintético.
+
+Comandos do smoke e da migração real estão em `TECHNICAL_DOCS.md`. Próxima etapa: segurança do login e atualização da cotação nos detalhes, depois divisão de estados e produto, conforme ordem abaixo.
+
+## Pendências de produto (não implementadas)
+
+1. Dividir o `AppState` em `AuthState`/`MarketState`/`PortfolioState` com `provider` (adiado de propósito: toda notificação reconstrói todos os builders).
+2. Tema escuro (cores fixas em `lib/theme.dart` e nas telas).
+3. Alertas de preço-alvo (notificações locais).
+4. Ordenação/filtro nas listas.
+5. Telas com outros dados da brapi (dividendos, câmbio, inflação).
+6. PBKDF2 em Dart puro (60.000 nativo / 20.000 Web, cedendo à UI a cada 1000): avaliar isolate (nativo) ou Argon2id; limitar tentativas de login.
+7. Tela de detalhes: trocar o período do gráfico não atualiza `AppState.stocks`.
+8. Testes de widget das telas novas.
+
+## Regras para continuar
+
+- Rode `flutter analyze` e `flutter test` a cada mudança; não deixe vermelho.
+- Mudou o schema? Suba `AppDatabase.schemaVersion`, escreva `onUpgrade` e um teste de migração (modelo: o de v1→v2 em `test/app_database_test.dart`).
+- O ambiente do autor é Windows (arquivos com CRLF): ao gerar patches, prefira editar arquivos direto a `git apply`.
+- Atualize `TECHNICAL_DOCS.md` e `MELHORIAS.md` quando algo mudar.
+- Commits pequenos, mensagens em português.
+
+## Ordem sugerida
+
+1. Verificações iniciais acima concluídas; repetir as afetadas por cada mudança.
+2. Pendência 6 (segurança do login) e 7 (detalhes).
+3. Pendência 1 (dividir o `AppState`), mantendo os testes verdes.
+4. Pendências 2, 4, 3 e 5, nessa ordem.
+
+## Prompt sugerido para colar no Codex
+
+> Leia `AGENTS.md`, `docs/HANDOFF_CODEX.md`, `TECHNICAL_DOCS.md` e `MELHORIAS.md`. O projeto está com `flutter analyze` limpo e 53 testes passando. Execute primeiro a seção "O que AINDA NÃO foi verificado" do handoff, corrigindo o que falhar (com testes quando possível). Depois siga a "Ordem sugerida". Mantenha Flutter + brapi + SQLite, UI em português, e rode analyze e test a cada mudança.

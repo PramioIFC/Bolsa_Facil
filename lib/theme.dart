@@ -9,12 +9,12 @@ ThemeData buildTheme() {
   final scheme = ColorScheme.fromSeed(
     seedColor: primary,
     brightness: Brightness.light,
-    surface: const Color(0xFFF7F8FC),
+    surface: const Color(0xFFEFF1F7),
   );
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    scaffoldBackgroundColor: const Color(0xFFF7F8FC),
+    scaffoldBackgroundColor: const Color(0xFFEFF1F7),
     fontFamily: 'sans-serif',
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
@@ -25,7 +25,8 @@ ThemeData buildTheme() {
     ),
     cardTheme: CardThemeData(
       color: Colors.white,
-      elevation: 0,
+      elevation: 3,
+      shadowColor: Colors.black.withValues(alpha: 0.15),
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),

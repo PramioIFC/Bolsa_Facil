@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 import 'database/app_database.dart';
+import 'database/db_factory.dart';
 import 'screens/app_shell.dart';
 import 'screens/auth_screen.dart';
 import 'services/brapi_service.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initDatabaseFactory();
   runApp(const BolsaFacilApp());
 }
 
@@ -25,8 +27,13 @@ class _BolsaFacilAppState extends State<BolsaFacilApp> {
   @override
   void initState() {
     super.initState();
-    state = AppState(BrapiService(), AppDatabase());
-    state.initialize();
+    state = AppState(BrapiService(), AppDatabase.instance)..initialize();
+  }
+
+  @override
+  void dispose() {
+    state.dispose();
+    super.dispose();
   }
 
   @override

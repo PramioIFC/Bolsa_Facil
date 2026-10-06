@@ -18,6 +18,28 @@ class _AppShellState extends State<AppShell> {
   int index = 0;
 
   @override
+  void initState() {
+    super.initState();
+    widget.state.addListener(_onStateChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.state.removeListener(_onStateChanged);
+    super.dispose();
+  }
+
+  /// Exibe, uma única vez, erros de ações do usuário (ex.: falha ao salvar).
+  void _onStateChanged() {
+    final message = widget.state.takeActionError();
+    if (message == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final pages = [
       HomeScreen(state: widget.state),

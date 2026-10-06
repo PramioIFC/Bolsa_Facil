@@ -15,3 +15,6 @@ linux/flutter/ephemeral/
 windows/flutter/ephemeral/
 .env
 .tool-data/
+.chrome-data/
+.data/
+config/dart_defines.json

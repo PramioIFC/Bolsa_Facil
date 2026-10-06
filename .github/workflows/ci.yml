@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      # Garante que o app compila para a Web (imports condicionais, sqlite wasm).
+      - run: flutter build web --release --dart-define=BRAPI_BASE_URL=http://localhost:8080/api

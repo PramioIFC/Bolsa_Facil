@@ -1,57 +1,71 @@
 # Bolsa Fácil
 
-App Flutter para acompanhar ações brasileiras usando a [brapi.dev](https://brapi.dev/).
+Aplicativo Flutter para acompanhar ações da B3 (cotações da [brapi.dev](https://brapi.dev/)), favoritar ativos e simular uma carteira com compras, vendas e histórico. Os dados do usuário ficam em SQLite local (no navegador, na Web).
 
-## Recursos
+Documentação: [`TECHNICAL_DOCS.md`](TECHNICAL_DOCS.md) · Mudanças desta versão: [`MELHORIAS.md`](MELHORIAS.md) · Continuação do trabalho: [`docs/HANDOFF_CODEX.md`](docs/HANDOFF_CODEX.md)
 
-- Lista de ações com preço, variação e busca por ticker
-- Detalhes da empresa e gráfico histórico
-- Cadastro, login e sessão persistente em SQLite
-- Favoritos e carteira separados por conta
-- Carteira simulada com preço médio, valor atual e lucro/prejuízo
+## Requisitos
 
-No Flutter Web, o banco SQLite é executado em WebAssembly e persistido pelo
-navegador. As contas e carteiras são locais ao dispositivo/navegador; não são
-sincronizadas entre aparelhos.
+- Flutter estável recente (Dart `>=3.3.0 <4.0.0`)
+- Token gratuito da brapi: <https://brapi.dev/dashboard>
+
+## Configuração do token
+
+| Plataforma | Onde configurar |
+|---|---|
+| Web | `.env` na raiz (`cp .env.example .env`). Lido **só pelo proxy**; nunca vai ao navegador |
+| Android / Windows | `config/dart_defines.json` (copie de `config/dart_defines.example.json`) |
 
 ## Executar
 
-1. Instale o Flutter (3.24 ou superior).
-2. Abra o arquivo `.env` e adicione seu token:
-
-```env
-BRAPI_TOKEN=seu_token_aqui
-```
-
-3. No Windows, inicie proxy e aplicativo com um único comando:
-
-```powershell
-.\run_web.ps1
-```
-
-Alternativamente, abra dois terminais. No primeiro, inicie o proxy local que
-mantém o token fora do navegador:
-
-```bash
-dart run tool/brapi_proxy.dart
-```
-
-4. No segundo terminal, execute o aplicativo:
-
 ```bash
 flutter pub get
-flutter run -d chrome
+
+# Web (precisa do proxy): terminal 1
+dart run tool/brapi_proxy.dart
+# terminal 2
+flutter run -d chrome --web-port 3000
+# (Windows: .\run_web.ps1 faz os dois passos)
+
+# Android / Windows (chama a brapi direto)
+flutter run --dart-define-from-file=config/dart_defines.json
 ```
 
-O arquivo `.env` está no `.gitignore` e não deve ser enviado ao repositório. O
-`.env.example` documenta a variável necessária sem guardar a credencial real.
+### SQLite na Web (WebAssembly)
 
-O Flutter Web usa `http://localhost:8081/api` por padrão. Em produção, publique
-o proxy em um servidor e informe seu endereço com
-`--dart-define=BRAPI_BASE_URL=https://seu-servidor.com/api`.
-
-Para Android/Windows, também é possível usar diretamente:
+A Web usa `sqflite_common_ffi_web`. Os arquivos `web/sqlite3.wasm` e `web/sqflite_sw.js` precisam ser da **mesma versão** do pacote resolvido. Depois de `flutter pub get` (e a cada atualização do pacote), rode:
 
 ```bash
-flutter run --dart-define=BRAPI_TOKEN=seu_token
+dart run sqflite_common_ffi_web:setup
 ```
+
+## Testes e análise
+
+```bash
+flutter analyze
+flutter test
+```
+
+O CI (`.github/workflows/ci.yml`) roda análise, testes e `flutter build web`.
+
+## Proxy (`tool/brapi_proxy.dart`)
+
+Só encaminha `GET /api/quote/{ticker}` para a brapi, injetando o token. Escuta em `127.0.0.1:8080` por padrão, aceita CORS apenas de `localhost`/`127.0.0.1` e limita 120 req/min por IP. Variáveis: `BRAPI_TOKEN`, `PROXY_HOST`, `PORT`, `ALLOWED_ORIGINS`, `RATE_LIMIT`.
+
+## Backup
+
+Conta → **Exportar backup** copia um JSON (favoritos e operações, sem senha). **Importar backup** o restaura, substituindo os dados atuais.
+
+## Ambiente verificado e validação
+
+Validado com Flutter 3.47.5 / Dart 3.13.4. As dependências do lock exigem Flutter >=3.44 e Dart >=3.12. Consulte `TECHNICAL_DOCS.md` e `docs/HANDOFF_CODEX.md` para os resultados e pendências.
+
+No Windows, `./run_web.ps1` usa proxy em 8081; outra porta pode ser escolhida com `./run_web.ps1 -ProxyPort 8082`. O script passa a URL correta ao Flutter e não encerra proxies de outros projetos. A base padrão do serviço continua em 8080 para execução manual; use o mesmo `BRAPI_BASE_URL` do proxy quando escolher outra porta.
+
+```powershell
+flutter analyze
+flutter test
+flutter run -d windows --release -t tool/platform_smoke.dart
+```
+
+A verificação de plataforma usa banco descartável e confirma SQLite/sessão/carteira/backup. Não lê nem altera o banco principal.

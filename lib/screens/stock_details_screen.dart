@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/stock.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
+import '../utils/format.dart';
 import '../widgets/stock_tile.dart';
 
 class StockDetailsScreen extends StatefulWidget {
@@ -43,7 +44,7 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
       error = null;
     });
     try {
-      final value = await widget.state.api.getQuote(
+      final value = await widget.state.loadQuote(
         widget.initialStock.symbol,
         range: requestedRange,
       );
@@ -76,7 +77,7 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
           Padding(padding: const EdgeInsets.only(bottom: 6), child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(color: (up ? positive : negative).withValues(alpha: .1), borderRadius: BorderRadius.circular(10)),
-            child: Text('${up ? '+' : ''}${current.changePercent.toStringAsFixed(2)}%', style: TextStyle(color: up ? positive : negative, fontWeight: FontWeight.w800)),
+            child: Text(formatPercent(current.changePercent), style: TextStyle(color: up ? positive : negative, fontWeight: FontWeight.w800)),
           )),
         ]),
         const SizedBox(height: 26),
@@ -108,7 +109,7 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
           SizedBox(
             height: selectedRange == '1y' ? 340 : 270,
             child: current.history.isEmpty
-                ? _ChartLoading(error: error)
+                ? _ChartLoading(error: error, loading: chartLoading)
                 : _PriceChart(
                     stock: current,
                     range: selectedRange,
@@ -116,11 +117,35 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
           ),
         ]))),
         const SizedBox(height: 16),
-        Card(child: Padding(padding: const EdgeInsets.all(18), child: Row(children: [
-          Expanded(child: _Metric(label: 'Moeda', value: current.currency)),
-          Container(width: 1, height: 38, color: Colors.blueGrey.shade100),
-          Expanded(child: _Metric(label: 'Valor de mercado', value: current.marketCap == null ? '—' : _compact(current.marketCap!))),
+        Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Row(children: [Icon(Icons.monitor_heart_outlined, color: primary), SizedBox(width: 10), Text('Saúde da Empresa', style: TextStyle(color: ink, fontSize: 18, fontWeight: FontWeight.w900))]),
+          const SizedBox(height: 16),
+          Row(children: [
+            Expanded(child: _Metric(label: 'P/L', value: current.trailingPE?.toStringAsFixed(2) ?? '—')),
+            Container(width: 1, height: 38, color: Colors.blueGrey.shade100),
+            Expanded(child: _Metric(label: 'P/VP', value: current.priceToBook?.toStringAsFixed(2) ?? '—')),
+            Container(width: 1, height: 38, color: Colors.blueGrey.shade100),
+            Expanded(child: _Metric(label: 'Margem', value: current.profitMargins != null ? '${(current.profitMargins! * 100).toStringAsFixed(1)}%' : '—')),
+          ]),
+          const SizedBox(height: 16),
+          Row(children: [
+            Expanded(child: _Metric(label: 'V. Mercado', value: current.marketCap == null ? '—' : _compact(current.marketCap!))),
+            Container(width: 1, height: 38, color: Colors.blueGrey.shade100),
+            Expanded(child: _Metric(label: 'Dívida', value: current.totalDebt == null ? '—' : _compact(current.totalDebt!))),
+            Container(width: 1, height: 38, color: Colors.blueGrey.shade100),
+            Expanded(child: _Metric(label: 'Caixa', value: current.totalCash == null ? '—' : _compact(current.totalCash!))),
+          ]),
         ]))),
+        if (current.dividendYield != null && current.dividendYield! > 0) ...[
+          const SizedBox(height: 16),
+          Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [Icon(Icons.payments_outlined, color: Colors.green.shade600), const SizedBox(width: 10), const Text('Dividendos', style: TextStyle(color: ink, fontSize: 18, fontWeight: FontWeight.w900))]),
+            const SizedBox(height: 12),
+            Text('Dividend Yield: ${(current.dividendYield! * 100).toStringAsFixed(2)}%', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            const SizedBox(height: 8),
+            Text('Se você investir R\$ 1.000 hoje, a projeção com base no último ano é receber aproximadamente R\$ ${(1000 * current.dividendYield!).toStringAsFixed(2)} em proventos nos próximos 12 meses.', style: const TextStyle(color: Colors.blueGrey, height: 1.4)),
+          ]))),
+        ],
         const SizedBox(height: 16),
         _BuyCard(state: widget.state, stock: current),
       ]),
@@ -168,6 +193,14 @@ class _BuyCardState extends State<_BuyCard> {
             '${purchasedQuantity.toStringAsFixed(2)} ações de '
             '${widget.stock.symbol} adicionadas à carteira.',
           ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -369,10 +402,24 @@ class _PriceChart extends StatelessWidget {
 }
 
 class _ChartLoading extends StatelessWidget {
-  const _ChartLoading({this.error});
+  const _ChartLoading({this.error, this.loading = false});
   final String? error;
+  final bool loading;
+
   @override
-  Widget build(BuildContext context) => Center(child: error == null ? const CircularProgressIndicator() : Text(error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.blueGrey)));
+  Widget build(BuildContext context) {
+    if (error != null) {
+      return Center(child: Text(error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.blueGrey)));
+    }
+    if (loading) return const Center(child: CircularProgressIndicator());
+    return const Center(
+      child: Text(
+        'Histórico indisponível para este ativo no seu plano da brapi.',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.blueGrey),
+      ),
+    );
+  }
 }
 
 class _Metric extends StatelessWidget {

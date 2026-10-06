@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/stock.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
+import '../utils/format.dart';
 import '../widgets/stock_tile.dart';
 import 'stock_details_screen.dart';
 
@@ -17,16 +20,43 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final controller = TextEditingController();
   bool searching = false;
+  Timer? _debounce;
+  List<TickerSuggestion> suggestions = const [];
 
   @override
   void dispose() {
+    _debounce?.cancel();
     controller.dispose();
     super.dispose();
   }
 
+  /// Autocomplete: espera 400 ms sem digitação e descarta respostas antigas.
+  void _onChanged(String value) {
+    _debounce?.cancel();
+    final query = value.trim();
+    if (query.length < 2) {
+      if (suggestions.isNotEmpty) setState(() => suggestions = const []);
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      final result = await widget.state.suggest(query);
+      if (!mounted || controller.text.trim() != query) return;
+      setState(() => suggestions = result);
+    });
+  }
+
+  void _pick(TickerSuggestion suggestion) {
+    controller.text = suggestion.symbol;
+    _search();
+  }
+
   Future<void> _search() async {
+    _debounce?.cancel();
     if (controller.text.trim().isEmpty) return;
-    setState(() => searching = true);
+    setState(() {
+      searching = true;
+      suggestions = const [];
+    });
     try {
       final stock = await widget.state.search(controller.text);
       if (mounted && stock != null) _open(stock);
@@ -57,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: TextField(
                   controller: controller,
                   textCapitalization: TextCapitalization.characters,
+                  onChanged: _onChanged,
                   onSubmitted: (_) => _search(),
                   decoration: InputDecoration(
                     hintText: 'Buscar ação, ex: PETR4',
@@ -66,12 +97,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            if (suggestions.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+                sliver: SliverToBoxAdapter(
+                  child: _Suggestions(items: suggestions, onPick: _pick),
+                ),
+              ),
+            if (_statusMessage(widget.state) != null)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                sliver: SliverToBoxAdapter(
+                  child: _StatusBanner(message: _statusMessage(widget.state)!),
+                ),
+              ),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverToBoxAdapter(
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   const Text('Ações em destaque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: ink)),
-                  Text('B3 • agora', style: TextStyle(color: Colors.blueGrey.shade400, fontSize: 12)),
+                  Text(_updatedLabel(widget.state), style: TextStyle(color: Colors.blueGrey.shade400, fontSize: 12)),
                 ]),
               ),
             ),
@@ -121,4 +166,65 @@ class _ErrorState extends StatelessWidget {
         const SizedBox(height: 16),
         FilledButton.icon(onPressed: retry, icon: const Icon(Icons.refresh), label: const Text('Tentar novamente')),
       ])));
+}
+
+String _updatedLabel(AppState state) {
+  final time = state.updatedAt;
+  return time == null ? 'B3' : 'B3 • atualizado ${formatUpdatedAt(time)}';
+}
+
+/// Resume problemas da última atualização (ou `null` se está tudo certo).
+String? _statusMessage(AppState state) {
+  final parts = <String>[];
+  if (state.rateLimited) {
+    parts.add('Limite de requisições da brapi atingido; alguns preços podem estar desatualizados.');
+  } else if (state.failedSymbols.isNotEmpty) {
+    final symbols = state.failedSymbols.toList()..sort();
+    parts.add('Sem atualização para: ${symbols.join(', ')}.');
+  }
+  if (state.usingStaleData && state.updatedAt != null) {
+    parts.add('Exibindo dados salvos de ${formatUpdatedAt(state.updatedAt!)}.');
+  }
+  return parts.isEmpty ? null : parts.join(' ');
+}
+
+class _StatusBanner extends StatelessWidget {
+  const _StatusBanner({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF4D8),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF9A6700)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(message, style: const TextStyle(fontSize: 12.5, height: 1.35, color: Color(0xFF5C4300))),
+          ),
+        ]),
+      );
+}
+
+class _Suggestions extends StatelessWidget {
+  const _Suggestions({required this.items, required this.onPick});
+  final List<TickerSuggestion> items;
+  final ValueChanged<TickerSuggestion> onPick;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        margin: EdgeInsets.zero,
+        child: Column(children: [
+          for (final item in items)
+            ListTile(
+              dense: true,
+              title: Text(item.symbol, style: const TextStyle(fontWeight: FontWeight.w800, color: ink)),
+              subtitle: item.name.isEmpty ? null : Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+              onTap: () => onPick(item),
+            ),
+        ]),
+      );
 }
