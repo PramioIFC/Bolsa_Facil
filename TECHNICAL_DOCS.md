@@ -10,7 +10,7 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 | API externa | brapi.dev: `/api/quote/{ticker}` e `/api/quote/list` |
 | Gráficos | `fl_chart ^0.69.0` (linha no histórico, pizza na alocação) |
 
-> **Verificação em 05/10/2026:** `flutter analyze` limpo; 70 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
+> **Verificação em 05/10/2026:** `flutter analyze` limpo; 76 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
 
 ---
 
@@ -226,7 +226,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | Limite local de login | Cinco falhas por 60 segundos; acesso direto ao banco pode contornar o limite e retrocesso do relógio pode prolongá-lo |
 | Cotações exigem rede | Há cache de 5 min, mas só dos campos básicos (sem histórico/fundamentos) |
 | Plano gratuito da brapi | 1 ticker por requisição e cotas limitadas |
-| Tela de detalhes | Troca de período não atualiza `AppState.stocks` |
+| Detalhes e listas | Cotação dos detalhes atualiza a lista; respostas antigas do mesmo ticker e de sessões encerradas são ignoradas |
 | Sem tema escuro, alertas de preço ou ordenação | Não implementados |
 | `AppState` único | Não foi dividido em estados menores; toda notificação reconstrói os builders |
 | Proxy | Limite por IP em memória (some ao reiniciar); atrás de proxy reverso o IP observado é o do proxy |
@@ -247,7 +247,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | `test/app_state_test.dart` | Fluxos de registro, sessão, favoritos, compra/venda, backup |
 | `test/widget_test.dart` | `AuthScreen` |
 
-Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 70 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
+Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 76 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
 
 ## 9. Verificações reproduzíveis por plataforma
 
@@ -273,3 +273,5 @@ O proxy em 8080 colidiu com outro serviço local. `run_web.ps1` usa 8081 por pad
 ### Segurança do login — schema v4
 
 `test/login_security_test.dart` cobre vetores conhecidos de PBKDF2, concorrência, expiração, persistência ao reabrir, migração v3→v4 e hashes mais fortes. Login de uma conta Web existente foi verificado no navegador com Web Crypto. Referências: [Flutter compute](https://api.flutter.dev/flutter/foundation/compute.html) e [Web Cryptography](https://www.w3.org/TR/WebCryptoAPI/#pbkdf2-operations).
+
+`test/detail_quote_state_test.dart` cobre substituição/inserção de cotações, falha preservando dados, períodos fora de ordem, logout e descarte.

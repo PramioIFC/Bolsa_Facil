@@ -68,6 +68,7 @@ class AppState extends ChangeNotifier {
   int _refreshingEpoch = -1;
   bool _disposed = false;
   final Map<String, List<TickerSuggestion>> _suggestionCache = {};
+  final Map<String, int> _detailRequests = {};
 
   @override
   void notifyListeners() {
@@ -109,7 +110,8 @@ class AppState extends ChangeNotifier {
     required String email,
     required String password,
   }) async {
-    final user = await db.register(name: name, email: email, password: password);
+    final user =
+        await db.register(name: name, email: email, password: password);
     await _startSession(user);
   }
 
@@ -181,7 +183,8 @@ class AppState extends ChangeNotifier {
         ...favorites,
         ...portfolio.map((item) => item.symbol),
       };
-      final update = await quotes.getQuotes(symbols.toList(), forceRefresh: force);
+      final update =
+          await quotes.getQuotes(symbols.toList(), forceRefresh: force);
       if (epoch != _epoch) return;
       stocks = update.stocks;
       failedSymbols = update.failed;
@@ -217,8 +220,27 @@ class AppState extends ChangeNotifier {
   }
 
   /// Cotação detalhada com histórico (tela de detalhes).
-  Future<Stock> loadQuote(String symbol, {String range = '3mo'}) =>
-      brapiService.getQuote(symbol, range: range);
+  Future<Stock> loadQuote(String symbol, {String range = '3mo'}) async {
+    final normalized = symbol.trim().toUpperCase();
+    final epoch = _epoch;
+    final request = (_detailRequests[normalized] ?? 0) + 1;
+    _detailRequests[normalized] = request;
+    final stock = await brapiService.getQuote(normalized, range: range);
+    if (_disposed ||
+        epoch != _epoch ||
+        _detailRequests[normalized] != request) {
+      return stock;
+    }
+    final index = stocks.indexWhere((item) => item.symbol == normalized);
+    stocks = [...stocks];
+    if (index < 0) {
+      stocks.add(stock);
+    } else {
+      stocks[index] = stock;
+    }
+    notifyListeners();
+    return stock;
+  }
 
   /// Sugestões de tickers para o autocomplete. Nunca lança.
   Future<List<TickerSuggestion>> suggest(String query) async {
@@ -267,12 +289,14 @@ class AppState extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   /// Compra: soma à posição e recalcula o preço médio (taxas entram no custo).
-  Future<void> buy(String symbol, double quantity, double price, {double fees = 0}) =>
+  Future<void> buy(String symbol, double quantity, double price,
+          {double fees = 0}) =>
       _trade(TradeType.buy, symbol, quantity, price, fees);
 
   /// Venda: reduz a posição e realiza lucro/prejuízo. Lança [TradeException]
   /// se a quantidade exceder a posição.
-  Future<void> sell(String symbol, double quantity, double price, {double fees = 0}) =>
+  Future<void> sell(String symbol, double quantity, double price,
+          {double fees = 0}) =>
       _trade(TradeType.sell, symbol, quantity, price, fees);
 
   Future<void> _trade(
@@ -336,7 +360,9 @@ class AppState extends ChangeNotifier {
   /// Backup (favoritos e operações) em JSON identado. Sem senha nem hash.
   Future<String> exportJson() async {
     final user = currentUser;
-    if (user == null) throw const DataImportException('Faça login para exportar.');
+    if (user == null) {
+      throw const DataImportException('Faça login para exportar.');
+    }
     final data = await db.exportUserData(user.id);
     return const JsonEncoder.withIndent('  ').convert(data);
   }
@@ -344,7 +370,9 @@ class AppState extends ChangeNotifier {
   /// Substitui favoritos e carteira pelo conteúdo do backup.
   Future<void> importJson(String text) async {
     final user = currentUser;
-    if (user == null) throw const DataImportException('Faça login para importar.');
+    if (user == null) {
+      throw const DataImportException('Faça login para importar.');
+    }
     final Map<String, dynamic> data;
     try {
       data = jsonDecode(text) as Map<String, dynamic>;

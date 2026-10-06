@@ -1,3 +1,9 @@
+# Cotações dos detalhes
+
+- Abrir detalhes ou trocar período atualiza a cotação nas listas sem duplicar ativos.
+- Respostas antigas, de sessão encerrada ou de estado descartado não sobrescrevem dados.
+- Seis testes de regressão; total de 76.
+
 # Segurança do login — 05/10/2026
 
 - PBKDF2 em isolate nativo e Web Crypto; compatibilidade com hashes existentes e sem reduzir hashes mais fortes.
