@@ -9,19 +9,26 @@ import '../models/trade.dart';
 import '../models/user_account.dart';
 import '../services/brapi_service.dart';
 import '../services/quote_repository.dart';
+import '../services/price_alert_notifications.dart';
+import 'alert_state.dart';
 import 'auth_state.dart';
 import 'market_state.dart';
 import 'portfolio_state.dart';
 
 /// Facade compatível que coordena estados independentes e a sessão local.
 class AppState extends ChangeNotifier {
-  AppState(this.brapiService, this.db, {QuoteRepository? quoteRepository})
+  AppState(this.brapiService, this.db,
+      {QuoteRepository? quoteRepository,
+      PriceAlertNotifications? notifications})
       : quotes = quoteRepository ?? QuoteRepository(brapiService, db) {
     authState = AuthState(db);
-    marketState = MarketState(brapiService, quotes, authState);
+    alertState = AlertState(
+        db, authState, notifications ?? LocalPriceAlertNotifications());
+    marketState = MarketState(brapiService, quotes, authState,
+        onFreshQuotes: alertState.evaluate);
     portfolioState = PortfolioState(db, authState);
     marketAndPortfolio = Listenable.merge([marketState, portfolioState]);
-    for (final state in [authState, marketState, portfolioState]) {
+    for (final state in [authState, marketState, portfolioState, alertState]) {
       state.addListener(notifyListeners);
     }
   }
@@ -32,6 +39,7 @@ class AppState extends ChangeNotifier {
   late final AuthState authState;
   late final MarketState marketState;
   late final PortfolioState portfolioState;
+  late final AlertState alertState;
   late final Listenable marketAndPortfolio;
   bool _disposed = false;
 
@@ -131,6 +139,7 @@ class AppState extends ChangeNotifier {
   void _clearData() {
     marketState.clear();
     portfolioState.clear();
+    alertState.clear();
   }
 
   Future<void> initialize() async {
@@ -140,7 +149,10 @@ class AppState extends ChangeNotifier {
       if (!authState.isEpochCurrent(epoch)) return;
       currentUser = user;
       epoch = authState.capture().epoch;
-      if (user != null) await portfolioState.loadUserData();
+      if (user != null) {
+        await portfolioState.loadUserData();
+        if (authState.isEpochCurrent(epoch)) await alertState.load();
+      }
     } catch (e) {
       if (authState.isEpochCurrent(epoch)) {
         authState.initializationError = e.toString();
@@ -163,6 +175,7 @@ class AppState extends ChangeNotifier {
     final session = authState.capture();
     try {
       await portfolioState.loadUserData();
+      if (authState.isCurrent(session)) await alertState.load();
     } finally {
       if (authState.isCurrent(session)) {
         authState.initializing = false;
@@ -197,8 +210,12 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> refresh({bool force = true}) => marketState.refresh(
-      {...defaultSymbols, ...favorites, ...portfolio.map((item) => item.symbol)}
-          .toList(),
+      {
+        ...defaultSymbols,
+        ...favorites,
+        ...portfolio.map((item) => item.symbol),
+        ...alertState.activeSymbols
+      }.toList(),
       force: force);
   Stock? stockFor(String symbol) => marketState.stockFor(symbol);
   Future<Stock?> search(String symbol) => marketState.search(symbol);
@@ -245,7 +262,10 @@ class AppState extends ChangeNotifier {
   Future<void> importJson(String text) async {
     final session = authState.capture();
     final applied = await portfolioState.importJson(text);
-    if (applied && authState.isCurrent(session)) await refresh(force: false);
+    if (applied && authState.isCurrent(session)) {
+      await alertState.load();
+      if (authState.isCurrent(session)) await refresh(force: false);
+    }
   }
 
   @override
@@ -256,11 +276,12 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    for (final state in [authState, marketState, portfolioState]) {
+    for (final state in [authState, marketState, portfolioState, alertState]) {
       state.removeListener(notifyListeners);
     }
     marketState.dispose();
     portfolioState.dispose();
+    alertState.dispose();
     authState.dispose();
     super.dispose();
   }

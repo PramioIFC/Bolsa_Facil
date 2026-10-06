@@ -222,7 +222,7 @@ class _ImportDialogState extends State<_ImportDialog> {
         title: const Text('Importar backup'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           const Text(
-            'Cole o JSON exportado. Isso SUBSTITUI seus favoritos e sua carteira atuais.',
+            'Substitui favoritos e carteira. Se incluir alertas, também serão substituídos.',
           ),
           const SizedBox(height: 12),
           TextField(

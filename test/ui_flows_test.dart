@@ -1,3 +1,4 @@
+import 'package:bolsa_facil/models/price_alert.dart';
 import 'dart:convert';
 
 import 'package:bolsa_facil/database/app_database.dart';
@@ -20,6 +21,8 @@ import 'helpers/fakes.dart';
 
 class _FailingFavoriteDatabase extends AppDatabase {
   @override
+  Future<List<PriceAlert>> getPriceAlerts(int userId) async => [];
+  @override
   Future<void> toggleFavorite(int userId, String symbol, bool favorite) async {
     throw StateError('Falha de gravação simulada');
   }
@@ -27,6 +30,8 @@ class _FailingFavoriteDatabase extends AppDatabase {
 
 /// Test double for UI contracts; SQLite atomicity is verified separately.
 class _UiDatabase extends AppDatabase {
+  @override
+  Future<List<PriceAlert>> getPriceAlerts(int userId) async => [];
   final trades = <Trade>[];
   final favorites = <String>{};
 

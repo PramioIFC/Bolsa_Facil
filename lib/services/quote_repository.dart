@@ -10,6 +10,7 @@ class QuoteUpdate {
     this.rateLimited = false,
     this.hasStale = false,
     this.updatedAt,
+    this.freshSymbols = const {},
   });
 
   /// Cotações na mesma ordem dos símbolos pedidos (as sem dado ficam de fora).
@@ -24,6 +25,9 @@ class QuoteUpdate {
 
   /// Instante da cotação mais antiga entre as exibidas.
   final DateTime? updatedAt;
+
+  /// Somente respostas recebidas da rede nesta consulta, excluindo qualquer cache.
+  final Set<String> freshSymbols;
 }
 
 /// Camada entre o estado e a brapi: aplica cache em SQLite com TTL e usa dado
@@ -68,7 +72,9 @@ class QuoteRepository {
     final toFetch = <String>[];
     for (final symbol in requested) {
       final entry = cached[symbol];
-      if (entry != null && !forceRefresh && now.difference(entry.fetchedAt) < _ttl) {
+      if (entry != null &&
+          !forceRefresh &&
+          now.difference(entry.fetchedAt) < _ttl) {
         results[symbol] = entry.stock;
         fetchedAt[symbol] = entry.fetchedAt;
       } else {
@@ -79,6 +85,7 @@ class QuoteRepository {
     final failed = <String>{};
     var rateLimited = false;
     var hasStale = false;
+    final freshSymbols = <String>{};
     QuoteFailure? worstFailure;
 
     if (toFetch.isNotEmpty) {
@@ -89,6 +96,7 @@ class QuoteRepository {
         if (fresh != null) {
           results[symbol] = fresh;
           fetchedAt[symbol] = now;
+          freshSymbols.add(symbol);
           continue;
         }
         failed.add(symbol);
@@ -127,6 +135,7 @@ class QuoteRepository {
       rateLimited: rateLimited,
       hasStale: hasStale,
       updatedAt: oldest,
+      freshSymbols: freshSymbols,
     );
   }
 

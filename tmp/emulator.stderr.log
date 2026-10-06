@@ -1,0 +1,35 @@
+I1005 21:21:25.449595    6196 opengles.cpp:291] android_startOpenglesRenderer: gpu info
+I1005 21:21:25.450278    6196 opengles.cpp:292] GPU #1
+  Make: 8086
+  Model: Intel(R) Iris(R) Xe Graphics
+  Device ID: 46a8
+
+I1005 21:21:25.706020    6196 userspace-boot-properties.cpp:766] Userspace boot properties:
+I1005 21:21:25.706497    6196 userspace-boot-properties.cpp:770]   androidboot.boot_devices=pci0000:00/0000:00:03.0 pci0000:00/0000:00:06.0
+I1005 21:21:25.706742    6196 userspace-boot-properties.cpp:770]   androidboot.dalvik.vm.heapsize=512m
+I1005 21:21:25.706952    6196 userspace-boot-properties.cpp:770]   androidboot.debug.hwui.renderer=skiagl
+I1005 21:21:25.707154    6196 userspace-boot-properties.cpp:770]   androidboot.debug.sf.nobootanimation=1
+I1005 21:21:25.707368    6196 userspace-boot-properties.cpp:770]   androidboot.hardware=ranchu
+I1005 21:21:25.707573    6196 userspace-boot-properties.cpp:770]   androidboot.hardware.gltransport=pipe
+I1005 21:21:25.707793    6196 userspace-boot-properties.cpp:770]   androidboot.hardware.vulkan=ranchu
+I1005 21:21:25.708011    6196 userspace-boot-properties.cpp:770]   androidboot.logcat=*:V
+I1005 21:21:25.708231    6196 userspace-boot-properties.cpp:770]   androidboot.opengles.version=196608
+I1005 21:21:25.708457    6196 userspace-boot-properties.cpp:770]   androidboot.qemu=1
+I1005 21:21:25.708667    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.adb.pubkey=QAAAADNCfkgFdzHjxiPb71dUnRaJrmz1T6rbkajLjOYL0XbMmaYiPter7WGaVitATa83c6EIEt+GDufgFggP1+Cdd4CbE7TFoJCnlKR10BwpwKPuYyRXZzWrMpyXpdo62P9v3ctkVTBekqc0wTDrRjUBcPNJ/IKGavbBbqMnq00hbTq3jfiM2lsnKSPb3C+TbMPg9+q3j1Cu0rwUIIG/KCuscj0wk0X4lKY9YkRvNHcWNjjtccPsep6Oy7UxynJlAjZoATIOc2qd9HKpKiEkISMoXrENmizrpDKJcSLs26CuAsglzgphsuvPRbJrRBU+ZSeOuBsmoLCZarrdM4EFjffLtiDYJK3N+yAINdJTZWMGdG9pkkqKTVBP9C+sbKBG+lwvPN+yrn2yAeZGqHC3vAQmJuYZpM4xxEnUO2v1+1pzBQwWZxnB0fldQkrb9lRGJDGXTbeJBZvxanOpaWlICYIDV8oqpjzrzaGml2iRRuXr0tqRksJ2+nbj/1TY5637xDfCC53xv276BhE9b7VbQKlnNZyaHE0ZFWHA0TF+fx5k0IJPDZ+VduYiqumYMkKhwJSI/GgSjnD5njBm7tph56ijh3cx5TQdCo9BJQ3gYq0k1BnRZHxz5befYMsgnAfVclOwcYvNObS8HPB7CRtmmpBTHhTXzFEGPQE1QwtcAd+4myZ27kffCgEAAQA= @unknown
+I1005 21:21:25.708862    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.avd_name=Medium_Phone_API_36.1
+I1005 21:21:25.709080    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.camera_hq_edge_processing=0
+I1005 21:21:25.709320    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.camera_protocol_ver=1
+I1005 21:21:25.709534    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.cpuvulkan.version=4202496
+I1005 21:21:25.709740    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.gltransport.drawFlushInterval=800
+I1005 21:21:25.709933    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.gltransport.name=pipe
+I1005 21:21:25.710137    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.hwcodec.avcdec=2
+I1005 21:21:25.710325    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.hwcodec.hevcdec=2
+I1005 21:21:25.710512    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.hwcodec.vpxdec=2
+I1005 21:21:25.710702    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.settings.system.screen_off_timeout=2147483647
+I1005 21:21:25.710885    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.virtiowifi=1
+I1005 21:21:25.711067    6196 userspace-boot-properties.cpp:770]   androidboot.qemu.vsync=60
+I1005 21:21:25.711259    6196 userspace-boot-properties.cpp:770]   androidboot.serialno=EMULATOR36X1X9X0
+I1005 21:21:25.711444    6196 userspace-boot-properties.cpp:770]   androidboot.vbmeta.digest=c269f1b730da0784ae58eeb393b3d69e4318e0ca5038a2de06a290b59bf97845
+I1005 21:21:25.711628    6196 userspace-boot-properties.cpp:770]   androidboot.vbmeta.hash_alg=sha256
+I1005 21:21:25.711811    6196 userspace-boot-properties.cpp:770]   androidboot.vbmeta.size=6720
+I1005 21:21:25.711984    6196 userspace-boot-properties.cpp:770]   androidboot.veritymode=enforcing

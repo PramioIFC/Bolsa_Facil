@@ -6,7 +6,7 @@ Documentação: [`TECHNICAL_DOCS.md`](TECHNICAL_DOCS.md) · Mudanças desta vers
 
 ## Requisitos
 
-- Flutter compatível com o lock: >=3.44 e Dart >=3.12 (ambiente verificado: Flutter 3.47.5 / Dart 3.13.4)
+- Flutter compatível com o lock: >=3.44 e Dart >=3.13 (ambiente verificado: Flutter 3.47.5 / Dart 3.13.4)
 - Token gratuito da brapi: <https://brapi.dev/dashboard>
 
 ## Configuração do token
@@ -54,7 +54,7 @@ Só encaminha `GET /api/quote/{ticker}` para a brapi, injetando o token. Escuta 
 
 ## Backup
 
-Conta → **Exportar backup** copia um JSON (favoritos e operações, sem senha). **Importar backup** o restaura, substituindo os dados atuais.
+Conta → **Exportar backup** copia um JSON (favoritos, operações e alertas, sem senha). **Importar backup** o restaura, substituindo favoritos e carteira. Alertas também são substituídos quando presentes no arquivo; backups antigos sem alertas preservam os existentes.
 
 ## Listas
 
@@ -66,7 +66,7 @@ Conta → **Aparência** oferece Sistema, Claro e Escuro. A escolha fica no SQLi
 
 ## Ambiente verificado e validação
 
-Validado com Flutter 3.47.5 / Dart 3.13.4. As dependências do lock exigem Flutter >=3.44 e Dart >=3.12. Consulte `TECHNICAL_DOCS.md` e `docs/HANDOFF_CODEX.md` para os resultados e pendências.
+Validado com Flutter 3.47.5 / Dart 3.13.4. As dependências do lock exigem Flutter >=3.44 e Dart >=3.13. Consulte `TECHNICAL_DOCS.md` e `docs/HANDOFF_CODEX.md` para os resultados e pendências.
 
 No Windows, `./run_web.ps1` usa proxy em 8081; outra porta pode ser escolhida com `./run_web.ps1 -ProxyPort 8082`. O script passa a URL correta ao Flutter e não encerra proxies de outros projetos. A base padrão do serviço continua em 8080 para execução manual; use o mesmo `BRAPI_BASE_URL` do proxy quando escolher outra porta.
 
@@ -77,3 +77,9 @@ flutter run -d windows --release -t tool/platform_smoke.dart
 ```
 
 A verificação de plataforma usa banco descartável e confirma SQLite/sessão/carteira/backup. Não lê nem altera o banco principal.
+
+## Alertas de preço
+
+Início → **Alertas** ou detalhes do ativo → **Criar alerta**. Escolha um alvo de alta ou queda. Cada alerta dispara uma vez ao receber uma cotação da rede com o app aberto; editar e rearmar permite outro disparo. O histórico fica no SQLite da conta, inclusive após recarregar a página.
+
+**Ativar notificações** solicita a permissão do sistema. O histórico funciona mesmo com permissão negada. Não há monitoramento em segundo plano. Notificações Web dependem de contexto seguro e suporte do navegador; Android e Windows usam notificações locais.

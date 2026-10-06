@@ -90,6 +90,7 @@ void main() {
             executedAt: DateTime.utc(2026, 1, 1)));
     final database = await initial.database;
     await database.insert('login_attempts', {'failed_at': 12345});
+    await database.execute('DROP TABLE price_alerts');
     await database.execute('DROP TABLE app_settings');
     await database.setVersion(4);
     await initial.close();

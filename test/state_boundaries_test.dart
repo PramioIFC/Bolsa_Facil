@@ -1,3 +1,4 @@
+import 'package:bolsa_facil/models/price_alert.dart';
 import 'dart:async';
 
 import 'package:bolsa_facil/database/app_database.dart';
@@ -18,6 +19,8 @@ const _quote =
     Stock(symbol: 'PETR4', name: 'Petrobras', price: 20, changePercent: 1);
 
 class _BoundaryDatabase extends AppDatabase {
+  @override
+  Future<List<PriceAlert>> getPriceAlerts(int userId) async => [];
   Future<Set<String>>? favoritesResult;
   Future<List<PortfolioItem>>? positionsResult;
   Future<void>? tradeResult;

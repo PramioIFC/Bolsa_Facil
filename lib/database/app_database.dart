@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 import '../models/portfolio_item.dart';
+import '../models/price_alert.dart';
 import '../models/stock.dart';
 import '../models/trade.dart';
 import '../models/user_account.dart';
@@ -50,7 +51,7 @@ class AppDatabase {
   /// Instância usada pelo aplicativo.
   static final AppDatabase instance = AppDatabase();
 
-  static const schemaVersion = 5;
+  static const schemaVersion = 6;
 
   /// Mantém o custo configurado nas contas existentes. O cálculo usa isolate
   /// nativo ou Web Crypto na Web, sem executar o laço na thread da interface.
@@ -96,6 +97,7 @@ class AppDatabase {
           await _createV2(db);
           await _createV4(db);
           await _createV5(db);
+          await _createV6(db);
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
@@ -105,6 +107,7 @@ class AppDatabase {
           if (oldVersion < 3) await _migrateLegacySession(db);
           if (oldVersion < 4) await _createV4(db);
           if (oldVersion < 5) await _createV5(db);
+          if (oldVersion < 6) await _createV6(db);
         },
       ),
     );
@@ -203,6 +206,85 @@ class AppDatabase {
         CHECK (theme_mode IN ('system', 'light', 'dark'))
     )''');
     await db.insert('app_settings', {'id': 1, 'theme_mode': 'system'});
+  }
+
+  Future<void> _createV6(Database db) =>
+      db.execute('''CREATE TABLE price_alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    symbol TEXT NOT NULL,
+    direction TEXT NOT NULL CHECK (direction IN ('above', 'below')),
+    target REAL NOT NULL CHECK (target > 0),
+    created_at TEXT NOT NULL,
+    triggered_at TEXT,
+    UNIQUE (user_id, symbol, direction, target)
+  )''');
+
+  Future<List<PriceAlert>> getPriceAlerts(int userId) async {
+    final db = await database;
+    final rows = await db.query('price_alerts',
+        where: 'user_id = ?',
+        whereArgs: [userId],
+        orderBy: 'created_at DESC, id DESC');
+    return rows.map(PriceAlert.fromMap).toList();
+  }
+
+  Future<PriceAlert> createPriceAlert(int userId, PriceAlert alert) async {
+    alert.validate();
+    final db = await database;
+    try {
+      final id = await db.insert(
+          'price_alerts', alert.copyWith(rearm: true).toMap(userId));
+      return alert.copyWith(
+          id: id, symbol: alert.symbol.trim().toUpperCase(), rearm: true);
+    } on DatabaseException catch (e) {
+      if (e.isUniqueConstraintError()) {
+        throw const PriceAlertException('Este alerta já existe.');
+      }
+      rethrow;
+    }
+  }
+
+  Future<bool> updatePriceAlert(int userId, int id, PriceAlert alert) async {
+    alert.validate();
+    final db = await database;
+    try {
+      return await db.update(
+              'price_alerts', alert.copyWith(rearm: true).toMap(userId),
+              where: 'id = ? AND user_id = ?', whereArgs: [id, userId]) ==
+          1;
+    } on DatabaseException catch (e) {
+      if (e.isUniqueConstraintError()) {
+        throw const PriceAlertException('Este alerta já existe.');
+      }
+      rethrow;
+    }
+  }
+
+  Future<bool> deletePriceAlert(int userId, int id) async {
+    final db = await database;
+    return await db.delete('price_alerts',
+            where: 'id = ? AND user_id = ?', whereArgs: [id, userId]) ==
+        1;
+  }
+
+  /// A atualização condicional garante um único vencedor e ignora edições recentes.
+  Future<bool> markPriceAlertTriggered(
+      int userId, PriceAlert expected, DateTime at) async {
+    final db = await database;
+    return await db.update(
+            'price_alerts', {'triggered_at': at.toUtc().toIso8601String()},
+            where:
+                'id = ? AND user_id = ? AND triggered_at IS NULL AND symbol = ? AND direction = ? AND target = ? AND created_at = ?',
+            whereArgs: [
+              expected.id,
+              userId,
+              expected.symbol,
+              expected.direction.name,
+              expected.target,
+              expected.createdAt.toUtc().toIso8601String()
+            ]) ==
+        1;
   }
 
   /// Preferência da instalação, independente da conta e dos backups de carteira.
@@ -627,6 +709,9 @@ class AppDatabase {
       'exportedAt': DateTime.now().toUtc().toIso8601String(),
       'favorites': favorites,
       'transactions': rows.map((row) => Trade.fromMap(row).toJson()).toList(),
+      'alerts': (await getPriceAlerts(userId))
+          .map((alert) => alert.toJson())
+          .toList(),
     };
   }
 
@@ -639,6 +724,8 @@ class AppDatabase {
     }
     final favorites = <String>{};
     final trades = <Trade>[];
+    final hasAlerts = data.containsKey('alerts');
+    final alerts = <PriceAlert>[];
     try {
       for (final item in (data['favorites'] as List? ?? const [])) {
         final symbol = (item as String).trim().toUpperCase();
@@ -647,6 +734,16 @@ class AppDatabase {
       for (final item in (data['transactions'] as List? ?? const [])) {
         trades.add(Trade.fromJson(item as Map<String, dynamic>));
       }
+      if (hasAlerts) {
+        final seen = <(String, AlertDirection, double)>{};
+        for (final item in data['alerts'] as List) {
+          final alert = PriceAlert.fromJson(item as Map<String, dynamic>);
+          if (!seen.add((alert.symbol, alert.direction, alert.target))) {
+            throw const FormatException('alerta duplicado');
+          }
+          alerts.add(alert);
+        }
+      }
     } catch (_) {
       throw const DataImportException('O backup contém dados inválidos.');
     }
@@ -654,6 +751,13 @@ class AppDatabase {
     final db = await database;
     try {
       await db.transaction((txn) async {
+        if (hasAlerts) {
+          await txn.delete('price_alerts',
+              where: 'user_id = ?', whereArgs: [userId]);
+          for (final alert in alerts) {
+            await txn.insert('price_alerts', alert.toMap(userId));
+          }
+        }
         for (final table in const ['favorites', 'positions', 'transactions']) {
           await txn.delete(table, where: 'user_id = ?', whereArgs: [userId]);
         }

@@ -157,6 +157,7 @@ void main() {
     await initial.toggleFavorite(user.id, 'PETR4', true);
     final database = await initial.database;
     await database.execute('DROP TABLE login_attempts');
+    await database.execute('DROP TABLE price_alerts');
     await database.execute('DROP TABLE app_settings');
     await database.setVersion(3);
     await initial.close();

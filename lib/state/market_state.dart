@@ -6,7 +6,8 @@ import '../services/quote_repository.dart';
 import 'auth_state.dart';
 
 class MarketState extends ChangeNotifier {
-  MarketState(this.brapiService, this.quotes, this.auth);
+  MarketState(this.brapiService, this.quotes, this.auth, {this.onFreshQuotes});
+  final Future<void> Function(QuoteUpdate, SessionIdentity)? onFreshQuotes;
   final BrapiService brapiService;
   final QuoteRepository quotes;
   final AuthState auth;
@@ -68,6 +69,7 @@ class MarketState extends ChangeNotifier {
       rateLimited = update.rateLimited;
       usingStaleData = update.hasStale;
       updatedAt = update.updatedAt;
+      await onFreshQuotes?.call(update, session);
     } catch (e) {
       if (!_active(session) || request != _refreshRequest) return;
       error = e.toString();
@@ -106,6 +108,8 @@ class MarketState extends ChangeNotifier {
     final stock = await brapiService.getQuote(normalized);
     if (!_active(session)) return null;
     _publishQuote(stock);
+    await onFreshQuotes?.call(
+        QuoteUpdate(stocks: [stock], freshSymbols: {stock.symbol}), session);
     return stock;
   }
 
@@ -117,6 +121,8 @@ class MarketState extends ChangeNotifier {
     final stock = await brapiService.getQuote(normalized, range: range);
     if (_active(session) && _detailRequests[normalized] == request) {
       _publishQuote(stock);
+      await onFreshQuotes?.call(
+          QuoteUpdate(stocks: [stock], freshSymbols: {stock.symbol}), session);
     }
     return stock;
   }

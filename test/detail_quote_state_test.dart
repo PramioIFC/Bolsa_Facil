@@ -1,3 +1,4 @@
+import 'package:bolsa_facil/models/price_alert.dart';
 import 'dart:async';
 
 import 'package:bolsa_facil/database/app_database.dart';
@@ -10,6 +11,8 @@ import 'package:http/http.dart' as http;
 import 'helpers/fakes.dart';
 
 class _SessionDatabase extends AppDatabase {
+  @override
+  Future<List<PriceAlert>> getPriceAlerts(int userId) async => [];
   @override
   Future<void> logout() async {}
 }

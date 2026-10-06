@@ -1,0 +1,154 @@
+00:00 +0: loading C:/Projetos/BolsaFacil/test/alert_database_test.dart
+00:00 +0: C:/Projetos/BolsaFacil/test/alert_state_test.dart: detalhe só avalia resposta publicada mais recente
+00:00 +1: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +2: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +3: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +4: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +5: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +6: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +7: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +8: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +9: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +10: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +11: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +12: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +13: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +14: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +15: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +16: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +17: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +18: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +19: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +20: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +21: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +22: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +23: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +24: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +25: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +26: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +27: C:/Projetos/BolsaFacil/test/alert_database_test.dart: freshSymbols distingue rede, TTL e falha parcial com cache vencido
+00:00 +28: C:/Projetos/BolsaFacil/test/app_state_test.dart: registrar carrega as cotações padrão e restaura a sessão depois
+00:00 +29: C:/Projetos/BolsaFacil/test/app_state_test.dart: registrar carrega as cotações padrão e restaura a sessão depois
+00:00 +30: C:/Projetos/BolsaFacil/test/app_state_test.dart: registrar carrega as cotações padrão e restaura a sessão depois
+00:00 +31: C:/Projetos/BolsaFacil/test/app_state_test.dart: registrar carrega as cotações padrão e restaura a sessão depois
+00:00 +32: C:/Projetos/BolsaFacil/test/alert_database_test.dart: CRUD recusa duplicatas e não altera alertas de outra conta
+00:00 +33: C:/Projetos/BolsaFacil/test/alert_database_test.dart: CRUD recusa duplicatas e não altera alertas de outra conta
+00:00 +34: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:00 +35: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:00 +36: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:00 +37: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:00 +38: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:00 +39: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:00 +40: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:00 +41: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +42: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +43: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +44: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +45: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +46: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +47: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +48: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +49: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +50: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +51: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +52: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +53: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:01 +54: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:02 +55: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:02 +56: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:02 +57: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:02 +58: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:02 +59: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:02 +60: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:03 +61: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:04 +62: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:04 +63: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:04 +64: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:04 +65: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:04 +66: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: seletor em Conta muda o MaterialApp e cores da cotação
+00:05 +67: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: tema Sistema acompanha brilho do dispositivo
+00:06 +68: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: erro ao salvar tema aparece e mantém opção anterior
+00:06 +69: C:/Projetos/BolsaFacil/test/dark_theme_ui_test.dart: Conta e Home cabem em viewport pequeno e Conta permite rolar
+00:07 +70: C:/Projetos/BolsaFacil/test/list_order_ui_test.dart: Início ordena e filtra localmente sem consultar API
+00:08 +71: C:/Projetos/BolsaFacil/test/list_order_ui_test.dart: Início ordena e filtra localmente sem consultar API
+00:08 +72: C:/Projetos/BolsaFacil/test/list_order_ui_test.dart: Início ordena e filtra localmente sem consultar API
+00:08 +73: C:/Projetos/BolsaFacil/test/list_order_ui_test.dart: Início ordena e filtra localmente sem consultar API
+00:08 +74: C:/Projetos/BolsaFacil/test/list_order_ui_test.dart: Início ordena e filtra localmente sem consultar API
+00:08 +75: C:/Projetos/BolsaFacil/test/list_order_ui_test.dart: Início ordena e filtra localmente sem consultar API
+00:08 +76: C:/Projetos/BolsaFacil/test/list_order_ui_test.dart: Início ordena e filtra localmente sem consultar API
+00:08 +77: C:/Projetos/BolsaFacil/test/login_security_test.dart: limite continua após reabrir o arquivo SQLite
+00:08 +78: C:/Projetos/BolsaFacil/test/login_security_test.dart: limite continua após reabrir o arquivo SQLite
+00:08 +79: C:/Projetos/BolsaFacil/test/login_security_test.dart: limite continua após reabrir o arquivo SQLite
+00:09 +80: C:/Projetos/BolsaFacil/test/login_security_test.dart: limite continua após reabrir o arquivo SQLite
+00:09 +81: C:/Projetos/BolsaFacil/test/login_security_test.dart: limite continua após reabrir o arquivo SQLite
+00:10 +82: C:/Projetos/BolsaFacil/test/login_security_test.dart: migração v3 → atual preserva conta, sessão e favoritos
+00:10 +83: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: cria com vírgula, valida alvo e remove após confirmação
+00:12 +84: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +85: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +86: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +87: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +88: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +89: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +90: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +91: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +92: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +93: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +94: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +95: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +96: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: histórico mostra disparo e edição rearma com direção abaixo
+00:12 +97: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: solicita permissão só por botão e negação mantém histórico
+00:12 +98: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: carrega, mostra erro e permite tentar novamente
+00:12 +99: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: falha de gravação preserva campos no diálogo para tentar novamente
+00:13 +100: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: Início abre alertas e detalhes preenchem código
+00:13 +101: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: Início abre alertas e detalhes preenchem código
+00:13 +102: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: Início abre alertas e detalhes preenchem código
+00:13 +103: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: Início abre alertas e detalhes preenchem código
+00:13 +104: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: Início abre alertas e detalhes preenchem código
+00:13 +105: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: Início abre alertas e detalhes preenchem código
+00:13 +106: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: Início abre alertas e detalhes preenchem código
+00:13 +107: C:/Projetos/BolsaFacil/test/price_alerts_ui_test.dart: alertas e diálogo cabem em 360px no tema escuro
+00:14 +108: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: mercado e carteira notificam só seu domínio e mantêm facade compatível
+00:14 +109: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: finally de refresh antigo não encerra carregamento da sessão nova
+00:14 +110: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: search depois de logout não repopula cotações
+00:14 +111: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: rollback antigo não altera favoritos nem erros da outra conta
+00:14 +112: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: falha de toggle antigo não desfaz toggle mais recente
+00:14 +113: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: trade pendente não carrega carteira depois de mudar de conta
+00:14 +114: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: dados de usuário só publicam juntos após todas as leituras
+00:14 +115: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: loadUserData pendente não publica após troca de conta
+00:14 +116: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: importação pendente não recarrega dados nem mercado de outra conta
+00:14 +117: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: dispose durante refresh impede alteração e notificação tardia
+00:14 +118: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: login só libera Home quando todos os dados do usuário estão prontos
+00:14 +119: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: logout aguarda cadastro pendente e deixa memória e banco deslogados
+00:14 +120: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: login mais recente fica igual na memória e sessão persistida
+00:14 +121: C:/Projetos/BolsaFacil/test/state_boundaries_test.dart: falha de autenticação não bloqueia logout seguinte na fila
+00:14 +122: C:/Projetos/BolsaFacil/test/stock_test.dart: Stock.fromJson mapeia campos básicos com padrões seguros
+00:14 +123: C:/Projetos/BolsaFacil/test/stock_test.dart: Stock.fromJson usa shortName quando não há longName
+00:14 +124: C:/Projetos/BolsaFacil/test/stock_test.dart: Stock.fromJson lê fundamentos e cai para financialData em profitMargins
+00:14 +125: C:/Projetos/BolsaFacil/test/stock_test.dart: Stock.fromJson descarta pontos do histórico com fechamento <= 0 e converte data em segundos
+00:14 +126: C:/Projetos/BolsaFacil/test/stock_test.dart: toCacheMap/fromCacheMap preservam os campos básicos
+00:16 +127: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: (setUpAll)
+00:16 +127: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: SQLite começa no sistema, valida opções e preserva tema após logout
+00:16 +128: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: as três opções persistem ao reabrir SQLite
+00:16 +129: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: as três opções persistem ao reabrir SQLite
+00:16 +130: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: as três opções persistem ao reabrir SQLite
+00:16 +131: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: as três opções persistem ao reabrir SQLite
+00:16 +132: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: as três opções persistem ao reabrir SQLite
+00:16 +133: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: as três opções persistem ao reabrir SQLite
+00:16 +134: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: as três opções persistem ao reabrir SQLite
+00:16 +135: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: as três opções persistem ao reabrir SQLite
+00:16 +136: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: as três opções persistem ao reabrir SQLite
+00:16 +137: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: as três opções persistem ao reabrir SQLite
+00:16 +138: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: migração v4 → v5 preserva conta, sessão, operações e limite de login
+00:17 +139: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: SettingsState carrega cada opção e inicia independente de autenticação
+00:17 +140: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: tema só muda após persistir e gravação concorrente é bloqueada
+00:17 +141: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: erro de gravação preserva tema; próxima tentativa pode salvar
+00:17 +142: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: erro de leitura mantém sistema e não impede salvar depois
+00:17 +143: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: descarte durante leitura não publica nem notifica
+00:17 +144: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: descarte durante gravação não publica nem notifica resposta
+00:17 +145: C:/Projetos/BolsaFacil/test/theme_settings_test.dart: (tearDownAll)
+00:17 +145: C:/Projetos/BolsaFacil/test/ui_flows_test.dart: Carteira mostra alocação, valida venda e registra histórico
+00:18 +146: C:/Projetos/BolsaFacil/test/ui_flows_test.dart: Carteira mostra alocação, valida venda e registra histórico
+00:19 +147: C:/Projetos/BolsaFacil/test/ui_flows_test.dart: Home avisa falhas parciais e dados antigos sem esconder cotações
+00:19 +148: C:/Projetos/BolsaFacil/test/ui_flows_test.dart: falha ao salvar favorito faz rollback e exibe SnackBar uma vez
+00:20 +149: C:/Projetos/BolsaFacil/test/ui_flows_test.dart: Conta exporta JSON sem senha e restaura carteira e favoritos
+00:20 +150: All tests passed!

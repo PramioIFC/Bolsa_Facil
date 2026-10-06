@@ -8,6 +8,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:bolsa_facil/database/app_database.dart';
 import 'package:bolsa_facil/database/db_factory.dart';
 import 'package:bolsa_facil/models/trade.dart';
+import 'package:bolsa_facil/models/price_alert.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,8 +38,28 @@ Future<void> main() async {
             quantity: 12,
             price: 31.5,
             executedAt: DateTime.utc(2026)));
+    await db.setThemeMode('dark');
+    final alert = await db.createPriceAlert(
+        user.id,
+        PriceAlert(
+          symbol: 'PETR4',
+          direction: AlertDirection.above,
+          target: 40,
+          createdAt: DateTime.utc(2026),
+        ));
     await db.close();
     db = AppDatabase(databaseName: path);
+    check(await db.getThemeMode() == 'dark', 'Tema não persistiu');
+    check((await db.getPriceAlerts(user.id)).single.id == alert.id,
+        'Alerta não persistiu');
+    check(
+        await db.markPriceAlertTriggered(
+            user.id, alert, DateTime.utc(2026, 1, 2)),
+        'Alerta não foi registrado');
+    check(
+        !await db.markPriceAlertTriggered(
+            user.id, alert, DateTime.utc(2026, 1, 2)),
+        'Alerta disparou duas vezes');
     check((await db.getSession())?.id == user.id, 'Sessão não persistiu');
     check((await db.getFavorites(user.id)).contains('PETR4'),
         'Favorito não persistiu');
@@ -61,6 +82,8 @@ Future<void> main() async {
     await db.importUserData(user.id, backup);
     check((await db.getPositions(user.id)).single.quantity == 10,
         'Backup incorreto');
+    check((await db.getPriceAlerts(user.id)).single.isTriggered,
+        'Histórico do alerta não persistiu no backup');
     await db.logout();
     check(await db.getSession() == null, 'Logout incorreto');
     await db.login('verificacao@example.test', 'Teste-local-2026');
@@ -68,8 +91,8 @@ Future<void> main() async {
     debugPrint('BOLSA_PLATFORM_SMOKE: PASS');
     runApp(const MaterialApp(
         home: Scaffold(
-      body:
-          Center(child: Text('SQLite: sessão, carteira e backup verificados.')),
+      body: Center(
+          child: Text('SQLite: sessão, carteira, tema e alertas verificados.')),
     )));
   } catch (error, stack) {
     debugPrint('BOLSA_PLATFORM_SMOKE: FAIL $error');

@@ -10,6 +10,7 @@ import '../utils/list_order.dart';
 import '../widgets/list_order_controls.dart';
 import '../widgets/stock_tile.dart';
 import 'stock_details_screen.dart';
+import 'price_alerts_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.state});
@@ -93,6 +94,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SliverPadding(
                     padding: EdgeInsets.fromLTRB(20, 28, 20, 6),
                     sliver: SliverToBoxAdapter(child: _Header()),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                    sliver: SliverToBoxAdapter(
+                        child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.notifications_outlined),
+                              label: const Text('Alertas de preço'),
+                              onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => PriceAlertsScreen(
+                                          state: widget.state))),
+                            ))),
                   ),
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),

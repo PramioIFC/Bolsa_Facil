@@ -1,3 +1,11 @@
+# Alertas de preço
+
+- Alertas por conta com alvo de alta/queda, edição para rearmar e histórico persistente.
+- Schema v6 aditivo; migração, isolamento por usuário e backup antigo/novo cobertos por testes.
+- Cotações de cache não acionam alertas; somente rede. Atualização condicional evita duplicatas; respostas atrasadas não sobrescrevem edição/exclusão nem notificam após logout.
+- Notificações locais Android/Windows/Web, com permissão explícita. Disparo permanece no histórico se o sistema negar ou falhar. Avaliação com o app aberto, sem agendamento em segundo plano.
+- Trinta e sete testes acrescentados; analyze limpo e 150 testes passaram.
+
 # Ordenação e filtros
 
 - Listas ordenadas por código, preço/variação ou valor/resultado da posição; desempate por código, sem mutar o estado global.

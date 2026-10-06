@@ -6,6 +6,7 @@ import '../state/app_state.dart';
 import '../theme.dart';
 import '../utils/format.dart';
 import '../widgets/stock_tile.dart';
+import 'price_alerts_screen.dart';
 
 class StockDetailsScreen extends StatefulWidget {
   const StockDetailsScreen(
@@ -65,6 +66,14 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
       appBar: AppBar(
         title: Text(current.symbol),
         actions: [
+          IconButton(
+              tooltip: 'Criar alerta para ${current.symbol}',
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => PriceAlertsScreen(
+                          state: widget.state, initialSymbol: current.symbol))),
+              icon: const Icon(Icons.add_alert_outlined)),
           AnimatedBuilder(
               animation: widget.state.portfolioState,
               builder: (_, __) => IconButton(

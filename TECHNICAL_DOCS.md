@@ -5,12 +5,12 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 | Item | Valor |
 |---|---|
 | Pacote / SDK | `bolsa_facil 1.0.0+1` · Dart `>=3.3.0 <4.0.0` |
-| Estados | `AuthState`, `MarketState` e `PortfolioState`; `AppState` coordena e mantém a interface pública, com injeção por construtor |
+| Estados | `AuthState`, `MarketState`, `PortfolioState` e `AlertState`; `AppState` coordena e mantém a interface pública, com injeção por construtor |
 | Persistência | SQLite: `sqflite` (Android/iOS), `sqflite_common_ffi` (desktop), `sqflite_common_ffi_web` (Web, Wasm) |
 | API externa | brapi.dev: `/api/quote/{ticker}` e `/api/quote/list` |
 | Gráficos | `fl_chart ^0.69.0` (linha no histórico, pizza na alocação) |
 
-> **Verificação em 05/10/2026:** `flutter analyze` limpo; 113 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
+> **Verificação em 05/10/2026:** `flutter analyze` limpo; 150 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
 
 ---
 
@@ -19,7 +19,7 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 | Camada | Pasta | Responsabilidade |
 |---|---|---|
 | Screens / Widgets | `lib/screens`, `lib/widgets` | UI; chamam apenas o `AppState` |
-| State | `lib/state/` | Autenticação, mercado e carteira separados; facade coordena sessão e ações |
+| State | `lib/state/` | Autenticação, mercado, carteira e alertas separados; facade coordena sessão e ações |
 | Repository | `lib/services/quote_repository.dart` | Cache SQLite com TTL, fallback para dado antigo |
 | Services | `lib/services/brapi_service.dart` | HTTP da brapi: paralelismo, repetição em 429, falhas tipadas |
 | Database | `lib/database/` | `AppDatabase` (schema, auth, carteira, backup, cache) e inicialização por plataforma |
@@ -50,12 +50,13 @@ Não há mais ramificação por plataforma no `AppState`: o mesmo `AppDatabase` 
 
 ## 2. Banco de dados
 
-Arquivo `bolsa_facil.db` (nativo) ou IndexedDB do navegador (Web). `PRAGMA foreign_keys = ON`. **Versão 5** do schema, com migrações `onUpgrade` 1 → 2 → 3 → 4 → 5.
+Arquivo `bolsa_facil.db` (nativo) ou IndexedDB do navegador (Web). `PRAGMA foreign_keys = ON`. **Versão 6** do schema, com migrações `onUpgrade` 1 → 2 → 3 → 4 → 5 → 6.
 
 ```
 users 1──N positions      (PK user_id+symbol)  ← derivada de transactions
 users 1──N favorites      (PK user_id+symbol)
 users 1──N transactions   (histórico de compras/vendas/ajustes)
+users 1──N price_alerts    (alvos e histórico de disparo)
 users 1──0..1 sessions    (id fixo = 1)
 quotes_cache              (global, por símbolo)
 ```
@@ -227,7 +228,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | Cotações exigem rede | Há cache de 5 min, mas só dos campos básicos (sem histórico/fundamentos) |
 | Plano gratuito da brapi | 1 ticker por requisição e cotas limitadas |
 | Detalhes e listas | Cotação dos detalhes atualiza a lista; respostas antigas do mesmo ticker e de sessões encerradas são ignoradas |
-| Alertas de preço | Ainda pendentes; tema e ordenação/filtro disponíveis |
+| Alertas de preço | Avaliados com cotações novas enquanto o app está aberto; sem monitoramento em segundo plano |
 | Estados e sessão | Respostas assíncronas só publicam na sessão que as iniciou; as telas observam estados específicos |
 | Proxy | Limite por IP em memória (some ao reiniciar); atrás de proxy reverso o IP observado é o do proxy |
 | Web: arquivos Wasm | `web/sqlite3.wasm` e `web/sqflite_sw.js` devem casar com a versão do pacote (`dart run sqflite_common_ffi_web:setup`) |
@@ -247,11 +248,11 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | `test/app_state_test.dart` | Fluxos de registro, sessão, favoritos, compra/venda, backup |
 | `test/widget_test.dart` | `AuthScreen` |
 
-Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 113 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
+Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 150 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
 
 ## 9. Verificações reproduzíveis por plataforma
 
-O ambiente validado usa Flutter 3.47.5 / Dart 3.13.4. O lock requer Flutter >=3.44 e Dart >=3.12. O Android usa AGP 8.11.1, Kotlin 2.2.20 e Gradle 8.14, conforme os mínimos do SDK instalado e a [tabela de compatibilidade Kotlin](https://kotlinlang.org/docs/gradle-configure-project.html). O Flutter emite avisos de atualização futura dessas versões, mas a validação permanece habilitada.
+O ambiente validado usa Flutter 3.47.5 / Dart 3.13.4. O lock requer Flutter >=3.44 e Dart >=3.13. O Android usa AGP 8.11.1, Kotlin 2.2.20 e Gradle 8.14, conforme os mínimos do SDK instalado e a [tabela de compatibilidade Kotlin](https://kotlinlang.org/docs/gradle-configure-project.html). O Flutter emite avisos de atualização futura dessas versões, mas a validação permanece habilitada.
 
 ```powershell
 flutter analyze
@@ -293,3 +294,13 @@ As preferências de ordenação/filtro pertencem à tela e duram enquanto ela es
 `test/list_order_test.dart` e `test/list_order_ui_test.dart` cobrem ordens, desempates, cópias, filtro, métricas indisponíveis, totais/alocação, viewport estreito e atualização com filtro sem resultados.
 
 Web release das listas passou. No navegador: ordem Maior preço colocou VALE3/PETR4/WEGE3 em sequência; filtro PETR deixou somente PETR4. Filtrar Carteira por VALE manteve totais e alocação PETR4, mostrando somente ausência de correspondências na lista.
+
+### Alertas — schema v6
+
+`price_alerts` pertence ao usuário e guarda código, direção `above`/`below`, alvo positivo e datas UTC de criação/disparo. A migração v5→v6 é aditiva. CRUD filtra o usuário; uma gravação condicional por identidade e critérios registra o disparo apenas uma vez. Editar rearma o alerta. Backups adicionam `alerts`; ausência dessa chave em arquivos antigos preserva os alertas atuais, enquanto lista presente substitui os da conta. Validação ocorre antes da transação.
+
+`AlertState` observa a sessão e ignora resultados atrasados. `QuoteUpdate.freshSymbols` identifica somente sucessos de rede, excluindo cache e dados antigos. Refresh inclui os símbolos de alertas ativos; detalhes avaliam somente a resposta publicada mais recente. O disparo é persistido antes da notificação; falha de entrega não apaga o histórico nem provoca outra entrega na atualização seguinte.
+
+`flutter_local_notifications 22.3.1` (BSD-3-Clause) oferece entrega imediata para Android/Windows/Web; inicialização não solicita permissão. A UI solicita permissão explicitamente. Android usa Java/Kotlin 17 e desugaring 2.1.4. Web exige contexto seguro e utiliza o worker fornecido pelo plugin. O app declara `flutter_web_plugins` do SDK, pois a implementação Web 1.0.0 não o declara e o registrador gerado precisa dele. Nenhum agendamento, permissão de alarme exato ou receiver de boot foi acrescentado. Referências: [pacote e documentação](https://pub.dev/packages/flutter_local_notifications/versions/22.3.1), [implementação Web](https://pub.dev/packages/flutter_local_notifications_web).
+
+Testes de alertas cobrem migração/preservação, CRUD por conta, backup, concorrência, cache versus rede, sessão e descarte, além de permissão negada e falhas de entrega com plugin falso.
