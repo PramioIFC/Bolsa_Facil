@@ -5,12 +5,12 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 | Item | Valor |
 |---|---|
 | Pacote / SDK | `bolsa_facil 1.0.0+1` · Dart `>=3.3.0 <4.0.0` |
-| Estado global | `AppState extends ChangeNotifier` (sem o pacote `provider`) |
+| Estados | `AuthState`, `MarketState` e `PortfolioState`; `AppState` coordena e mantém a interface pública, com injeção por construtor |
 | Persistência | SQLite: `sqflite` (Android/iOS), `sqflite_common_ffi` (desktop), `sqflite_common_ffi_web` (Web, Wasm) |
 | API externa | brapi.dev: `/api/quote/{ticker}` e `/api/quote/list` |
 | Gráficos | `fl_chart ^0.69.0` (linha no histórico, pizza na alocação) |
 
-> **Verificação em 05/10/2026:** `flutter analyze` limpo; 76 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
+> **Verificação em 05/10/2026:** `flutter analyze` limpo; 90 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
 
 ---
 
@@ -19,7 +19,7 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 | Camada | Pasta | Responsabilidade |
 |---|---|---|
 | Screens / Widgets | `lib/screens`, `lib/widgets` | UI; chamam apenas o `AppState` |
-| State | `lib/state/app_state.dart` | Estado em memória, orquestração, notificação da UI |
+| State | `lib/state/` | Autenticação, mercado e carteira separados; facade coordena sessão e ações |
 | Repository | `lib/services/quote_repository.dart` | Cache SQLite com TTL, fallback para dado antigo |
 | Services | `lib/services/brapi_service.dart` | HTTP da brapi: paralelismo, repetição em 429, falhas tipadas |
 | Database | `lib/database/` | `AppDatabase` (schema, auth, carteira, backup, cache) e inicialização por plataforma |
@@ -150,7 +150,7 @@ initialize() → db.getSession() → usuário? → _loadUserData() → refresh(f
 
 Resposta consumida por `Stock.fromJson` (campos): `symbol`, `longName`/`shortName`, `regularMarketPrice`, `regularMarketChangePercent`, `logourl`, `currency`, `marketCap`, `historicalDataPrice[{date (epoch s), close}]`, `defaultKeyStatistics{dividendYield, trailingPE, priceToBook, profitMargins}`, `financialData{totalDebt, totalCash, profitMargins}`. Pontos com `close <= 0` são descartados.
 
-**`GET /api/quote/list?search={termo}&limit=8`** (autocomplete). Lê `stocks[]`, aceitando `stock` ou `symbol` como código e `name` como nome. A documentação da brapi indica que este endpoint não exige token e que existe um `/api/v2/tickers` mais novo; o formato de resposta do `list` foi implementado de forma defensiva e **não foi validado contra a API real**.
+**`GET /api/quote/list?search={termo}&limit=8`** (autocomplete). Lê `stocks[]`, aceitando `stock` ou `symbol` como código e `name` como nome. A documentação da brapi indica que este endpoint não exige token e que existe um `/api/v2/tickers` mais novo; o formato `stocks[].stock/name/logo` foi confirmado contra a API real em 05/10/2026.
 
 ### 4.3 `QuoteRepository`
 
@@ -181,7 +181,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 
 ## 5. Gerenciamento de estado
 
-`AppState(BrapiService, AppDatabase, {QuoteRepository?})`, criado em `main.dart` e passado por construtor às telas, que o observam com `AnimatedBuilder`.
+`AppState(BrapiService, AppDatabase, {QuoteRepository?})` coordena três `ChangeNotifier`s, mantendo a API existente e a injeção por construtor. `AuthState` guarda sessão/inicialização; `MarketState` guarda cotações/cache/qualidade; `PortfolioState` guarda favoritos, posições, operações e backup. A raiz e Conta observam autenticação; Home, Favoritas e Carteira observam mercado + carteira; erros de ações vêm da carteira. O facade ainda notifica consumidores legados. Não foi necessária uma dependência de gerenciamento de estado.
 
 | Campo | Descrição |
 |---|---|
@@ -228,10 +228,10 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | Plano gratuito da brapi | 1 ticker por requisição e cotas limitadas |
 | Detalhes e listas | Cotação dos detalhes atualiza a lista; respostas antigas do mesmo ticker e de sessões encerradas são ignoradas |
 | Sem tema escuro, alertas de preço ou ordenação | Não implementados |
-| `AppState` único | Não foi dividido em estados menores; toda notificação reconstrói os builders |
+| Estados e sessão | Respostas assíncronas só publicam na sessão que as iniciou; as telas observam estados específicos |
 | Proxy | Limite por IP em memória (some ao reiniciar); atrás de proxy reverso o IP observado é o do proxy |
 | Web: arquivos Wasm | `web/sqlite3.wasm` e `web/sqflite_sw.js` devem casar com a versão do pacote (`dart run sqflite_common_ffi_web:setup`) |
-| Windows | Requer `sqlite3` disponível para o FFI; não verificado em execução |
+| Windows | SQLite FFI validado em execução com `tool/platform_smoke.dart` |
 
 ---
 
@@ -247,7 +247,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | `test/app_state_test.dart` | Fluxos de registro, sessão, favoritos, compra/venda, backup |
 | `test/widget_test.dart` | `AuthScreen` |
 
-Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 76 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
+Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 90 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
 
 ## 9. Verificações reproduzíveis por plataforma
 
@@ -275,3 +275,5 @@ O proxy em 8080 colidiu com outro serviço local. `run_web.ps1` usa 8081 por pad
 `test/login_security_test.dart` cobre vetores conhecidos de PBKDF2, concorrência, expiração, persistência ao reabrir, migração v3→v4 e hashes mais fortes. Login de uma conta Web existente foi verificado no navegador com Web Crypto. Referências: [Flutter compute](https://api.flutter.dev/flutter/foundation/compute.html) e [Web Cryptography](https://www.w3.org/TR/WebCryptoAPI/#pbkdf2-operations).
 
 `test/detail_quote_state_test.dart` cobre substituição/inserção de cotações, falha preservando dados, períodos fora de ordem, logout e descarte.
+
+`test/state_boundaries_test.dart` cobre notificações por domínio, respostas antigas de refresh/busca/operações/backup, carregamento atômico dos dados e descarte. Cadastro/login/logout são enfileirados para que uma operação atrasada não recrie uma sessão depois do logout. A Home só é liberada após reidratar os dados do usuário.

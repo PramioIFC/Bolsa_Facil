@@ -14,7 +14,7 @@ Leia, nesta ordem: `TECHNICAL_DOCS.md` (arquitetura atual), `MELHORIAS.md` (o qu
 |---|---|
 | `flutter pub get` e setup SQLite Web | passaram (`sqflite_common_ffi_web 1.2.0`) |
 | `flutter analyze` | No issues found |
-| `flutter test` | 76 testes passaram |
+| `flutter test` | 90 testes passaram |
 | Build Web release (base 8080 e 8081) | passou |
 | Web em uso real | cadastro, favorito, compra/venda/histórico, F5 com sessão/carteira e cache sem proxy passaram |
 | Autocomplete na API real | `stocks[].stock/name/logo` confirmado; `/v2/tickers` também respondeu, mas o endpoint atual foi mantido |
@@ -35,11 +35,11 @@ A v2 anexada foi incorporada ao checkout com autorização do usuário, preserva
 
 **Limite da verificação:** o smoke nativo testa a implementação SQLite real e dados; não foi feita revisão visual completa das telas Android/Windows. Os fluxos de UI foram exercitados em widgets e no Web. O banco real disponível tinha uma conta e nenhuma posição; a preservação de posições é coberta pelo banco legado sintético.
 
-Comandos do smoke e da migração real estão em `TECHNICAL_DOCS.md`. Próxima etapa: segurança do login e atualização da cotação nos detalhes, depois divisão de estados e produto, conforme ordem abaixo.
+Comandos do smoke e da migração real estão em `TECHNICAL_DOCS.md`. Segurança, detalhes e divisão de estados concluídos. Próxima etapa: tema escuro, ordenação/filtro, alertas e dados adicionais, conforme ordem abaixo.
 
-## Pendências de produto (não implementadas)
+## Estado das pendências de produto
 
-1. Dividir o `AppState` em `AuthState`/`MarketState`/`PortfolioState` com `provider` (adiado de propósito: toda notificação reconstrói todos os builders).
+1. **Concluída:** estados Auth/Market/Portfolio com facade compatível e injeção por construtor. Quatorze testes de limites e concorrência; sem dependência adicional.
 2. Tema escuro (cores fixas em `lib/theme.dart` e nas telas).
 3. Alertas de preço-alvo (notificações locais).
 4. Ordenação/filtro nas listas.

@@ -20,12 +20,12 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
-    widget.state.addListener(_onStateChanged);
+    widget.state.portfolioState.addListener(_onStateChanged);
   }
 
   @override
   void dispose() {
-    widget.state.removeListener(_onStateChanged);
+    widget.state.portfolioState.removeListener(_onStateChanged);
     super.dispose();
   }
 
@@ -35,7 +35,8 @@ class _AppShellState extends State<AppShell> {
     if (message == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     });
   }
 
@@ -53,10 +54,22 @@ class _AppShellState extends State<AppShell> {
         selectedIndex: index,
         onDestinationSelected: (value) => setState(() => index = value),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.candlestick_chart_outlined), selectedIcon: Icon(Icons.candlestick_chart), label: 'Início'),
-          NavigationDestination(icon: Icon(Icons.star_outline_rounded), selectedIcon: Icon(Icons.star_rounded), label: 'Favoritas'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet_rounded), label: 'Carteira'),
-          NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Conta'),
+          NavigationDestination(
+              icon: Icon(Icons.candlestick_chart_outlined),
+              selectedIcon: Icon(Icons.candlestick_chart),
+              label: 'Início'),
+          NavigationDestination(
+              icon: Icon(Icons.star_outline_rounded),
+              selectedIcon: Icon(Icons.star_rounded),
+              label: 'Favoritas'),
+          NavigationDestination(
+              icon: Icon(Icons.account_balance_wallet_outlined),
+              selectedIcon: Icon(Icons.account_balance_wallet_rounded),
+              label: 'Carteira'),
+          NavigationDestination(
+              icon: Icon(Icons.person_outline_rounded),
+              selectedIcon: Icon(Icons.person_rounded),
+              label: 'Conta'),
         ],
       ),
     );

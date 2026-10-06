@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
@@ -10,20 +9,31 @@ import '../models/trade.dart';
 import '../models/user_account.dart';
 import '../services/brapi_service.dart';
 import '../services/quote_repository.dart';
+import 'auth_state.dart';
+import 'market_state.dart';
+import 'portfolio_state.dart';
 
-/// Estado global do aplicativo.
-///
-/// Orquestra o banco local ([AppDatabase]), as cotações
-/// ([QuoteRepository]/[BrapiService]) e notifica a UI via [ChangeNotifier].
-/// Funciona igual em todas as plataformas: o SQLite é local (nativo) ou em
-/// WebAssembly (Web), escolhido em `initDatabaseFactory()`.
+/// Facade compatível que coordena estados independentes e a sessão local.
 class AppState extends ChangeNotifier {
   AppState(this.brapiService, this.db, {QuoteRepository? quoteRepository})
-      : quotes = quoteRepository ?? QuoteRepository(brapiService, db);
+      : quotes = quoteRepository ?? QuoteRepository(brapiService, db) {
+    authState = AuthState(db);
+    marketState = MarketState(brapiService, quotes, authState);
+    portfolioState = PortfolioState(db, authState);
+    marketAndPortfolio = Listenable.merge([marketState, portfolioState]);
+    for (final state in [authState, marketState, portfolioState]) {
+      state.addListener(notifyListeners);
+    }
+  }
 
   final BrapiService brapiService;
   final AppDatabase db;
   final QuoteRepository quotes;
+  late final AuthState authState;
+  late final MarketState marketState;
+  late final PortfolioState portfolioState;
+  late final Listenable marketAndPortfolio;
+  bool _disposed = false;
 
   static const defaultSymbols = [
     'PETR4',
@@ -33,42 +43,210 @@ class AppState extends ChangeNotifier {
     'ABEV3',
     'WEGE3',
     'BBAS3',
-    'MGLU3',
+    'MGLU3'
   ];
 
-  List<Stock> stocks = [];
-  Set<String> favorites = {};
-  List<PortfolioItem> portfolio = [];
-  double realizedProfit = 0;
+  List<Stock> get stocks => marketState.stocks;
+  set stocks(List<Stock> value) {
+    marketState.stocks = value;
+    marketState.notifyListeners();
+  }
 
-  bool loading = false;
-  bool initializing = true;
-  String? error;
-  UserAccount? currentUser;
+  Set<String> get favorites => portfolioState.favorites;
+  set favorites(Set<String> value) {
+    portfolioState.favorites = value;
+    portfolioState.notifyListeners();
+  }
 
-  /// Símbolos que não puderam ser atualizados na última consulta.
-  Set<String> failedSymbols = {};
-  bool rateLimited = false;
+  List<PortfolioItem> get portfolio => portfolioState.portfolio;
+  set portfolio(List<PortfolioItem> value) {
+    portfolioState.portfolio = value;
+    portfolioState.notifyListeners();
+  }
 
-  /// `true` se parte do que está na tela veio do cache por falha na consulta.
-  bool usingStaleData = false;
+  double get realizedProfit => portfolioState.realizedProfit;
+  set realizedProfit(double value) {
+    portfolioState.realizedProfit = value;
+    portfolioState.notifyListeners();
+  }
 
-  /// Instante da cotação mais antiga exibida.
-  DateTime? updatedAt;
+  bool get loading => marketState.loading;
+  set loading(bool value) {
+    marketState.loading = value;
+    marketState.notifyListeners();
+  }
 
-  /// Erro de uma ação do usuário (ex.: falha ao salvar favorito). A UI exibe
-  /// uma vez e limpa com [takeActionError].
-  String? actionError;
+  bool get initializing => authState.initializing;
+  set initializing(bool value) {
+    authState.initializing = value;
+    authState.notifyListeners();
+  }
+
+  String? get error => marketState.error ?? authState.initializationError;
+  set error(String? value) {
+    marketState.error = value;
+    marketState.notifyListeners();
+  }
+
+  UserAccount? get currentUser => authState.currentUser;
+  set currentUser(UserAccount? value) {
+    authState.invalidate();
+    _clearData();
+    authState.setUser(value);
+  }
+
+  Set<String> get failedSymbols => marketState.failedSymbols;
+  set failedSymbols(Set<String> value) {
+    marketState.failedSymbols = value;
+    marketState.notifyListeners();
+  }
+
+  bool get rateLimited => marketState.rateLimited;
+  set rateLimited(bool value) {
+    marketState.rateLimited = value;
+    marketState.notifyListeners();
+  }
+
+  bool get usingStaleData => marketState.usingStaleData;
+  set usingStaleData(bool value) {
+    marketState.usingStaleData = value;
+    marketState.notifyListeners();
+  }
+
+  DateTime? get updatedAt => marketState.updatedAt;
+  set updatedAt(DateTime? value) {
+    marketState.updatedAt = value;
+    marketState.notifyListeners();
+  }
+
+  String? get actionError => portfolioState.actionError;
+  set actionError(String? value) {
+    portfolioState.actionError = value;
+    portfolioState.notifyListeners();
+  }
 
   bool get isAuthenticated => currentUser != null;
+  String? takeActionError() => portfolioState.takeActionError();
 
-  // Incrementado a cada login/logout para descartar respostas atrasadas.
-  int _epoch = 0;
-  Future<void>? _refreshing;
-  int _refreshingEpoch = -1;
-  bool _disposed = false;
-  final Map<String, List<TickerSuggestion>> _suggestionCache = {};
-  final Map<String, int> _detailRequests = {};
+  void _clearData() {
+    marketState.clear();
+    portfolioState.clear();
+  }
+
+  Future<void> initialize() async {
+    var epoch = authState.invalidate();
+    try {
+      final user = await authState.restore();
+      if (!authState.isEpochCurrent(epoch)) return;
+      currentUser = user;
+      epoch = authState.capture().epoch;
+      if (user != null) await portfolioState.loadUserData();
+    } catch (e) {
+      if (authState.isEpochCurrent(epoch)) {
+        authState.initializationError = e.toString();
+      }
+    } finally {
+      if (authState.isEpochCurrent(epoch)) {
+        authState.initializing = false;
+        authState.notifyListeners();
+      }
+    }
+    if (authState.isEpochCurrent(epoch) && currentUser != null) {
+      unawaited(refresh(force: false));
+    }
+  }
+
+  Future<void> _startSession(UserAccount user, int epoch) async {
+    if (!authState.isEpochCurrent(epoch)) return;
+    authState.initializing = true;
+    currentUser = user;
+    final session = authState.capture();
+    try {
+      await portfolioState.loadUserData();
+    } finally {
+      if (authState.isCurrent(session)) {
+        authState.initializing = false;
+        authState.notifyListeners();
+      }
+    }
+    if (authState.isCurrent(session)) unawaited(refresh(force: false));
+  }
+
+  Future<void> register(
+      {required String name,
+      required String email,
+      required String password}) async {
+    final epoch = authState.invalidate();
+    final user =
+        await authState.register(name: name, email: email, password: password);
+    await _startSession(user, epoch);
+  }
+
+  Future<void> login(String email, String password) async {
+    final epoch = authState.invalidate();
+    final user = await authState.login(email, password);
+    await _startSession(user, epoch);
+  }
+
+  Future<void> logout() async {
+    final epoch = authState.invalidate();
+    await authState.logout();
+    if (!authState.isEpochCurrent(epoch)) return;
+    authState.initializing = false;
+    currentUser = null;
+  }
+
+  Future<void> refresh({bool force = true}) => marketState.refresh(
+      {...defaultSymbols, ...favorites, ...portfolio.map((item) => item.symbol)}
+          .toList(),
+      force: force);
+  Stock? stockFor(String symbol) => marketState.stockFor(symbol);
+  Future<Stock?> search(String symbol) => marketState.search(symbol);
+  Future<Stock> loadQuote(String symbol, {String range = '3mo'}) =>
+      marketState.loadQuote(symbol, range: range);
+  Future<List<TickerSuggestion>> suggest(String query) =>
+      marketState.suggest(query);
+  Future<void> toggleFavorite(String symbol) =>
+      portfolioState.toggleFavorite(symbol);
+
+  Future<void> buy(String symbol, double quantity, double price,
+          {double fees = 0}) =>
+      _trade(TradeType.buy, symbol, quantity, price, fees);
+  Future<void> sell(String symbol, double quantity, double price,
+          {double fees = 0}) =>
+      _trade(TradeType.sell, symbol, quantity, price, fees);
+  Future<void> _trade(TradeType type, String symbol, double quantity,
+      double price, double fees) async {
+    final session = authState.capture();
+    final applied =
+        await portfolioState.trade(type, symbol, quantity, price, fees);
+    if (applied &&
+        authState.isCurrent(session) &&
+        stockFor(symbol.trim().toUpperCase()) == null) {
+      await refresh(force: false);
+    }
+  }
+
+  Future<void> savePosition(PortfolioItem item) async {
+    final session = authState.capture();
+    final applied = await portfolioState.savePosition(item);
+    if (applied &&
+        authState.isCurrent(session) &&
+        stockFor(item.symbol) == null) {
+      await refresh(force: false);
+    }
+  }
+
+  Future<void> removePosition(String symbol) =>
+      portfolioState.removePosition(symbol);
+  Future<List<Trade>> tradesFor(String symbol) =>
+      portfolioState.tradesFor(symbol);
+  Future<String> exportJson() => portfolioState.exportJson();
+  Future<void> importJson(String text) async {
+    final session = authState.capture();
+    final applied = await portfolioState.importJson(text);
+    if (applied && authState.isCurrent(session)) await refresh(force: false);
+  }
 
   @override
   void notifyListeners() {
@@ -78,310 +256,12 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    for (final state in [authState, marketState, portfolioState]) {
+      state.removeListener(notifyListeners);
+    }
+    marketState.dispose();
+    portfolioState.dispose();
+    authState.dispose();
     super.dispose();
-  }
-
-  String? takeActionError() {
-    final message = actionError;
-    actionError = null;
-    return message;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Sessão
-  // ---------------------------------------------------------------------------
-
-  Future<void> initialize() async {
-    try {
-      currentUser = await db.getSession();
-      if (currentUser != null) await _loadUserData();
-    } catch (e) {
-      error = e.toString();
-    } finally {
-      initializing = false;
-      notifyListeners();
-    }
-    // As cotações carregam em segundo plano: o app abre sem esperar a rede.
-    if (currentUser != null) unawaited(refresh(force: false));
-  }
-
-  Future<void> register({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    final user =
-        await db.register(name: name, email: email, password: password);
-    await _startSession(user);
-  }
-
-  Future<void> login(String email, String password) async {
-    final user = await db.login(email, password);
-    await _startSession(user);
-  }
-
-  Future<void> _startSession(UserAccount user) async {
-    _epoch++;
-    currentUser = user;
-    await _loadUserData();
-    notifyListeners();
-    // Não espera a rede: a Home mostra o carregamento enquanto as cotações chegam.
-    unawaited(refresh(force: false));
-  }
-
-  Future<void> logout() async {
-    _epoch++;
-    await db.logout();
-    currentUser = null;
-    favorites = {};
-    portfolio = [];
-    stocks = [];
-    realizedProfit = 0;
-    failedSymbols = {};
-    rateLimited = false;
-    usingStaleData = false;
-    updatedAt = null;
-    error = null;
-    actionError = null;
-    notifyListeners();
-  }
-
-  Future<void> _loadUserData() async {
-    final user = currentUser;
-    if (user == null) return;
-    favorites = await db.getFavorites(user.id);
-    portfolio = await db.getPositions(user.id);
-    realizedProfit = await db.getRealizedProfit(user.id);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Cotações
-  // ---------------------------------------------------------------------------
-
-  /// Atualiza as cotações de: destaques padrão + favoritos + carteira.
-  /// Com [force] = `false` usa o cache local enquanto estiver dentro do TTL.
-  /// Chamadas simultâneas compartilham a mesma execução.
-  Future<void> refresh({bool force = true}) {
-    final running = _refreshing;
-    if (running != null && _refreshingEpoch == _epoch) return running;
-    _refreshingEpoch = _epoch;
-    final started = _doRefresh(force);
-    _refreshing = started;
-    return started.whenComplete(() {
-      if (identical(_refreshing, started)) _refreshing = null;
-    });
-  }
-
-  Future<void> _doRefresh(bool force) async {
-    final epoch = _epoch;
-    loading = true;
-    error = null;
-    notifyListeners();
-    try {
-      final symbols = <String>{
-        ...defaultSymbols,
-        ...favorites,
-        ...portfolio.map((item) => item.symbol),
-      };
-      final update =
-          await quotes.getQuotes(symbols.toList(), forceRefresh: force);
-      if (epoch != _epoch) return;
-      stocks = update.stocks;
-      failedSymbols = update.failed;
-      rateLimited = update.rateLimited;
-      usingStaleData = update.hasStale;
-      updatedAt = update.updatedAt;
-    } catch (e) {
-      if (epoch != _epoch) return;
-      error = e.toString();
-    } finally {
-      loading = false;
-      notifyListeners();
-    }
-  }
-
-  Stock? stockFor(String symbol) {
-    for (final stock in stocks) {
-      if (stock.symbol == symbol) return stock;
-    }
-    return null;
-  }
-
-  /// Busca uma ação pelo código (cache em memória primeiro).
-  Future<Stock?> search(String symbol) async {
-    final normalized = symbol.trim().toUpperCase();
-    if (normalized.isEmpty) return null;
-    final existing = stockFor(normalized);
-    if (existing != null) return existing;
-    final stock = await brapiService.getQuote(normalized);
-    stocks = [...stocks, stock];
-    notifyListeners();
-    return stock;
-  }
-
-  /// Cotação detalhada com histórico (tela de detalhes).
-  Future<Stock> loadQuote(String symbol, {String range = '3mo'}) async {
-    final normalized = symbol.trim().toUpperCase();
-    final epoch = _epoch;
-    final request = (_detailRequests[normalized] ?? 0) + 1;
-    _detailRequests[normalized] = request;
-    final stock = await brapiService.getQuote(normalized, range: range);
-    if (_disposed ||
-        epoch != _epoch ||
-        _detailRequests[normalized] != request) {
-      return stock;
-    }
-    final index = stocks.indexWhere((item) => item.symbol == normalized);
-    stocks = [...stocks];
-    if (index < 0) {
-      stocks.add(stock);
-    } else {
-      stocks[index] = stock;
-    }
-    notifyListeners();
-    return stock;
-  }
-
-  /// Sugestões de tickers para o autocomplete. Nunca lança.
-  Future<List<TickerSuggestion>> suggest(String query) async {
-    final key = query.trim().toUpperCase();
-    if (key.length < 2) return const [];
-    final cached = _suggestionCache[key];
-    if (cached != null) return cached;
-    try {
-      final result = await brapiService.searchTickers(key);
-      if (result.isNotEmpty) _suggestionCache[key] = result;
-      return result;
-    } catch (_) {
-      return const [];
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Favoritos (atualização otimista com rollback)
-  // ---------------------------------------------------------------------------
-
-  Future<void> toggleFavorite(String symbol) async {
-    final user = currentUser;
-    if (user == null) return;
-    final wasFavorite = favorites.contains(symbol);
-    if (wasFavorite) {
-      favorites.remove(symbol);
-    } else {
-      favorites.add(symbol);
-    }
-    notifyListeners();
-    try {
-      await db.toggleFavorite(user.id, symbol, !wasFavorite);
-    } catch (_) {
-      if (wasFavorite) {
-        favorites.add(symbol);
-      } else {
-        favorites.remove(symbol);
-      }
-      actionError = 'Não foi possível salvar o favorito. Tente novamente.';
-      notifyListeners();
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Carteira
-  // ---------------------------------------------------------------------------
-
-  /// Compra: soma à posição e recalcula o preço médio (taxas entram no custo).
-  Future<void> buy(String symbol, double quantity, double price,
-          {double fees = 0}) =>
-      _trade(TradeType.buy, symbol, quantity, price, fees);
-
-  /// Venda: reduz a posição e realiza lucro/prejuízo. Lança [TradeException]
-  /// se a quantidade exceder a posição.
-  Future<void> sell(String symbol, double quantity, double price,
-          {double fees = 0}) =>
-      _trade(TradeType.sell, symbol, quantity, price, fees);
-
-  Future<void> _trade(
-    TradeType type,
-    String symbol,
-    double quantity,
-    double price,
-    double fees,
-  ) async {
-    final user = currentUser;
-    if (user == null) return;
-    final normalized = symbol.trim().toUpperCase();
-    await db.recordTrade(
-      user.id,
-      Trade(
-        symbol: normalized,
-        type: type,
-        quantity: quantity,
-        price: price,
-        fees: fees,
-        executedAt: DateTime.now(),
-      ),
-    );
-    await _reloadPortfolio(user.id);
-    if (stockFor(normalized) == null) await refresh(force: false);
-  }
-
-  /// Edição manual: define quantidade e preço médio absolutos.
-  Future<void> savePosition(PortfolioItem item) async {
-    final user = currentUser;
-    if (user == null) return;
-    await db.adjustPosition(user.id, item);
-    await _reloadPortfolio(user.id);
-    if (stockFor(item.symbol) == null) await refresh(force: false);
-  }
-
-  /// Remove a posição e o histórico de operações do ativo.
-  Future<void> removePosition(String symbol) async {
-    final user = currentUser;
-    if (user == null) return;
-    await db.removePosition(user.id, symbol);
-    await _reloadPortfolio(user.id);
-  }
-
-  Future<List<Trade>> tradesFor(String symbol) {
-    final user = currentUser;
-    if (user == null) return Future.value(const []);
-    return db.getTrades(user.id, symbol: symbol);
-  }
-
-  Future<void> _reloadPortfolio(int userId) async {
-    portfolio = await db.getPositions(userId);
-    realizedProfit = await db.getRealizedProfit(userId);
-    notifyListeners();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Backup
-  // ---------------------------------------------------------------------------
-
-  /// Backup (favoritos e operações) em JSON identado. Sem senha nem hash.
-  Future<String> exportJson() async {
-    final user = currentUser;
-    if (user == null) {
-      throw const DataImportException('Faça login para exportar.');
-    }
-    final data = await db.exportUserData(user.id);
-    return const JsonEncoder.withIndent('  ').convert(data);
-  }
-
-  /// Substitui favoritos e carteira pelo conteúdo do backup.
-  Future<void> importJson(String text) async {
-    final user = currentUser;
-    if (user == null) {
-      throw const DataImportException('Faça login para importar.');
-    }
-    final Map<String, dynamic> data;
-    try {
-      data = jsonDecode(text) as Map<String, dynamic>;
-    } catch (_) {
-      throw const DataImportException('O texto colado não é um JSON válido.');
-    }
-    await db.importUserData(user.id, data);
-    await _loadUserData();
-    notifyListeners();
-    await refresh(force: false);
   }
 }

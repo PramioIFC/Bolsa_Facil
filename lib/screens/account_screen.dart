@@ -10,7 +10,12 @@ class AccountScreen extends StatelessWidget {
   final AppState state;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: state.authState,
+        builder: (context, _) => _buildAccount(context),
+      );
+
+  Widget _buildAccount(BuildContext context) {
     final user = state.currentUser;
     if (user == null) return const SizedBox.shrink();
     return Padding(

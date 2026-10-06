@@ -61,19 +61,23 @@ class _HomeScreenState extends State<HomeScreen> {
       final stock = await widget.state.search(controller.text);
       if (mounted && stock != null) _open(stock);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     } finally {
       if (mounted) setState(() => searching = false);
     }
   }
 
   void _open(Stock stock) => Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => StockDetailsScreen(state: widget.state, initialStock: stock),
+        builder: (_) =>
+            StockDetailsScreen(state: widget.state, initialStock: stock),
       ));
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-        animation: widget.state,
+        animation: widget.state.marketAndPortfolio,
         builder: (context, _) => RefreshIndicator(
           onRefresh: widget.state.refresh,
           child: CustomScrollView(slivers: [
@@ -92,7 +96,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   decoration: InputDecoration(
                     hintText: 'Buscar ação, ex: PETR4',
                     prefixIcon: const Icon(Icons.search_rounded),
-                    suffixIcon: searching ? const Padding(padding: EdgeInsets.all(14), child: CircularProgressIndicator(strokeWidth: 2)) : IconButton(onPressed: _search, icon: const Icon(Icons.arrow_forward_rounded)),
+                    suffixIcon: searching
+                        ? const Padding(
+                            padding: EdgeInsets.all(14),
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : IconButton(
+                            onPressed: _search,
+                            icon: const Icon(Icons.arrow_forward_rounded)),
                   ),
                 ),
               ),
@@ -114,16 +124,28 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverToBoxAdapter(
-                child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  const Text('Ações em destaque', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: ink)),
-                  Text(_updatedLabel(widget.state), style: TextStyle(color: Colors.blueGrey.shade400, fontSize: 12)),
-                ]),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Ações em destaque',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: ink)),
+                      Text(_updatedLabel(widget.state),
+                          style: TextStyle(
+                              color: Colors.blueGrey.shade400, fontSize: 12)),
+                    ]),
               ),
             ),
             if (widget.state.loading && widget.state.stocks.isEmpty)
-              const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+              const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()))
             else if (widget.state.error != null && widget.state.stocks.isEmpty)
-              SliverFillRemaining(child: _ErrorState(message: widget.state.error!, retry: widget.state.refresh))
+              SliverFillRemaining(
+                  child: _ErrorState(
+                      message: widget.state.error!,
+                      retry: widget.state.refresh))
             else
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
@@ -132,7 +154,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (_, i) {
                     final stock = widget.state.stocks[i];
-                    return StockTile(stock: stock, isFavorite: widget.state.favorites.contains(stock.symbol), onTap: () => _open(stock), onFavorite: () => widget.state.toggleFavorite(stock.symbol));
+                    return StockTile(
+                        stock: stock,
+                        isFavorite:
+                            widget.state.favorites.contains(stock.symbol),
+                        onTap: () => _open(stock),
+                        onFavorite: () =>
+                            widget.state.toggleFavorite(stock.symbol));
                   },
                 ),
               ),
@@ -145,11 +173,18 @@ class _Header extends StatelessWidget {
   const _Header();
   @override
   Widget build(BuildContext context) => Row(children: [
-        Container(padding: const EdgeInsets.all(11), decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(14)), child: const Icon(Icons.trending_up_rounded, color: Colors.white)),
+        Container(
+            padding: const EdgeInsets.all(11),
+            decoration: BoxDecoration(
+                color: primary, borderRadius: BorderRadius.circular(14)),
+            child: const Icon(Icons.trending_up_rounded, color: Colors.white)),
         const SizedBox(width: 12),
         const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Bolsa Fácil', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: ink)),
-          Text('Invista conhecimento primeiro', style: TextStyle(color: Colors.blueGrey)),
+          Text('Bolsa Fácil',
+              style: TextStyle(
+                  fontSize: 24, fontWeight: FontWeight.w900, color: ink)),
+          Text('Invista conhecimento primeiro',
+              style: TextStyle(color: Colors.blueGrey)),
         ]),
       ]);
 }
@@ -159,13 +194,20 @@ class _ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback retry;
   @override
-  Widget build(BuildContext context) => Center(child: Padding(padding: const EdgeInsets.all(32), child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.cloud_off_rounded, size: 54, color: Colors.blueGrey),
-        const SizedBox(height: 12),
-        Text(message, textAlign: TextAlign.center),
-        const SizedBox(height: 16),
-        FilledButton.icon(onPressed: retry, icon: const Icon(Icons.refresh), label: const Text('Tentar novamente')),
-      ])));
+  Widget build(BuildContext context) => Center(
+      child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.cloud_off_rounded,
+                size: 54, color: Colors.blueGrey),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+                onPressed: retry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Tentar novamente')),
+          ])));
 }
 
 String _updatedLabel(AppState state) {
@@ -177,7 +219,8 @@ String _updatedLabel(AppState state) {
 String? _statusMessage(AppState state) {
   final parts = <String>[];
   if (state.rateLimited) {
-    parts.add('Limite de requisições da brapi atingido; alguns preços podem estar desatualizados.');
+    parts.add(
+        'Limite de requisições da brapi atingido; alguns preços podem estar desatualizados.');
   } else if (state.failedSymbols.isNotEmpty) {
     final symbols = state.failedSymbols.toList()..sort();
     parts.add('Sem atualização para: ${symbols.join(', ')}.');
@@ -200,10 +243,13 @@ class _StatusBanner extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF9A6700)),
+          const Icon(Icons.info_outline_rounded,
+              size: 18, color: Color(0xFF9A6700)),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(message, style: const TextStyle(fontSize: 12.5, height: 1.35, color: Color(0xFF5C4300))),
+            child: Text(message,
+                style: const TextStyle(
+                    fontSize: 12.5, height: 1.35, color: Color(0xFF5C4300))),
           ),
         ]),
       );
@@ -221,8 +267,13 @@ class _Suggestions extends StatelessWidget {
           for (final item in items)
             ListTile(
               dense: true,
-              title: Text(item.symbol, style: const TextStyle(fontWeight: FontWeight.w800, color: ink)),
-              subtitle: item.name.isEmpty ? null : Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+              title: Text(item.symbol,
+                  style:
+                      const TextStyle(fontWeight: FontWeight.w800, color: ink)),
+              subtitle: item.name.isEmpty
+                  ? null
+                  : Text(item.name,
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
               onTap: () => onPick(item),
             ),
         ]),

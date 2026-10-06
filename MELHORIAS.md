@@ -1,3 +1,10 @@
+# Estados separados
+
+- Autenticação, mercado e carteira têm notificações independentes; telas observam os domínios necessários.
+- Respostas antigas e rollbacks não publicam em outra sessão nem após descarte.
+- Operações de autenticação serializadas mantêm SQLite e UI consistentes; dados do usuário carregam antes de liberar a Home.
+- Quatorze testes de limites e concorrência acrescentados; 90 no total.
+
 # Cotações dos detalhes
 
 - Abrir detalhes ou trocar período atualiza a cotação nas listas sem duplicar ativos.
@@ -24,7 +31,7 @@
 - Script Web aceita porta configurável (8081 padrão) e encerra apenas os processos que criou.
 - Smoke SQLite Windows e Android passaram. Pendências de produto abaixo ainda não implementadas.
 
-# Melhorias aplicadas (branch `melhorias`)
+# Registro histórico da v2 anexada (branch original `melhorias`)
 
 Legenda: ✅ implementado (não executado) · 🟡 parcial · ⬜ não feito.
 
@@ -58,7 +65,7 @@ Legenda: ✅ implementado (não executado) · 🟡 parcial · ⬜ não feito.
 | Consultas em paralelo (3) e backoff em HTTP 429 | ✅ | `BrapiService.fetchQuotes/fetchQuote` |
 | Distinguir 429 / 401 / 404 / rede | ✅ `QuoteFailure` | `brapi_service.dart` |
 | Avisar quando um ticker falha e mostrar "atualizado às…" | ✅ | `home_screen.dart` |
-| Autocomplete de tickers | 🟡 implementado sobre `/api/quote/list?search=`; formato de resposta **não validado** na API real | `searchTickers`, `home_screen.dart` |
+| Autocomplete de tickers | ✅ `/api/quote/list?search=` confirmado na API real em 05/10/2026 | `searchTickers`, `home_screen.dart` |
 | Novas telas com dividendos/câmbio/inflação | ⬜ | — |
 
 ## 4. Modelo de dados
@@ -77,7 +84,7 @@ Legenda: ✅ implementado (não executado) · 🟡 parcial · ⬜ não feito.
 |---|---|
 | Repositório de cotações entre estado e fonte | ✅ `QuoteRepository` |
 | Tela de detalhes passa pelo `AppState` | ✅ `loadQuote` |
-| Dividir `AppState` em `AuthState`/`MarketState`/`PortfolioState` + `provider` | ⬜ adiado de propósito: refatoração ampla, arriscada sem compilador |
+| Dividir `AppState` | ✅ estados Auth/Market/Portfolio, facade compatível, injeção por construtor sem nova dependência |
 
 ## 6. Produto e experiência
 

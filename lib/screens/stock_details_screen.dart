@@ -8,7 +8,8 @@ import '../utils/format.dart';
 import '../widgets/stock_tile.dart';
 
 class StockDetailsScreen extends StatefulWidget {
-  const StockDetailsScreen({super.key, required this.state, required this.initialStock});
+  const StockDetailsScreen(
+      {super.key, required this.state, required this.initialStock});
   final AppState state;
   final Stock initialStock;
 
@@ -63,92 +64,215 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(current.symbol),
-        actions: [AnimatedBuilder(animation: widget.state, builder: (_, __) => IconButton(
-          onPressed: () => widget.state.toggleFavorite(current.symbol),
-          icon: Icon(widget.state.favorites.contains(current.symbol) ? Icons.star_rounded : Icons.star_outline_rounded, color: const Color(0xFFFFB020)),
-        )), const SizedBox(width: 8)],
-      ),
-      body: ListView(padding: const EdgeInsets.fromLTRB(20, 8, 20, 28), children: [
-        Text(current.name, style: const TextStyle(color: Colors.blueGrey, fontSize: 15)),
-        const SizedBox(height: 14),
-        Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text(money(current.price), style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: ink, letterSpacing: -1)),
-          const SizedBox(width: 12),
-          Padding(padding: const EdgeInsets.only(bottom: 6), child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(color: (up ? positive : negative).withValues(alpha: .1), borderRadius: BorderRadius.circular(10)),
-            child: Text(formatPercent(current.changePercent), style: TextStyle(color: up ? positive : negative, fontWeight: FontWeight.w800)),
-          )),
-        ]),
-        const SizedBox(height: 26),
-        Card(child: Padding(padding: const EdgeInsets.fromLTRB(16, 20, 16, 12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Expanded(child: Text('Histórico • ${periods[selectedRange]}', style: const TextStyle(fontWeight: FontWeight.w800, color: ink))),
-            if (chartLoading) const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-          ]),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: periods.entries.map((period) => ChoiceChip(
-              label: Text(period.value),
-              selected: selectedRange == period.key,
-              onSelected: chartLoading ? null : (_) => _load(period.key),
-            )).toList(),
-          ),
-          if (current.history.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Text(
-              '${_fullDate(current.history.first.date)} — '
-              '${_fullDate(current.history.last.date)}  •  '
-              '${current.history.length} pregões',
-              style: const TextStyle(color: Colors.blueGrey, fontSize: 12),
-            ),
-          ],
-          const SizedBox(height: 20),
-          SizedBox(
-            height: selectedRange == '1y' ? 340 : 270,
-            child: current.history.isEmpty
-                ? _ChartLoading(error: error, loading: chartLoading)
-                : _PriceChart(
-                    stock: current,
-                    range: selectedRange,
-                  ),
-          ),
-        ]))),
-        const SizedBox(height: 16),
-        Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Row(children: [Icon(Icons.monitor_heart_outlined, color: primary), SizedBox(width: 10), Text('Saúde da Empresa', style: TextStyle(color: ink, fontSize: 18, fontWeight: FontWeight.w900))]),
-          const SizedBox(height: 16),
-          Row(children: [
-            Expanded(child: _Metric(label: 'P/L', value: current.trailingPE?.toStringAsFixed(2) ?? '—')),
-            Container(width: 1, height: 38, color: Colors.blueGrey.shade100),
-            Expanded(child: _Metric(label: 'P/VP', value: current.priceToBook?.toStringAsFixed(2) ?? '—')),
-            Container(width: 1, height: 38, color: Colors.blueGrey.shade100),
-            Expanded(child: _Metric(label: 'Margem', value: current.profitMargins != null ? '${(current.profitMargins! * 100).toStringAsFixed(1)}%' : '—')),
-          ]),
-          const SizedBox(height: 16),
-          Row(children: [
-            Expanded(child: _Metric(label: 'V. Mercado', value: current.marketCap == null ? '—' : _compact(current.marketCap!))),
-            Container(width: 1, height: 38, color: Colors.blueGrey.shade100),
-            Expanded(child: _Metric(label: 'Dívida', value: current.totalDebt == null ? '—' : _compact(current.totalDebt!))),
-            Container(width: 1, height: 38, color: Colors.blueGrey.shade100),
-            Expanded(child: _Metric(label: 'Caixa', value: current.totalCash == null ? '—' : _compact(current.totalCash!))),
-          ]),
-        ]))),
-        if (current.dividendYield != null && current.dividendYield! > 0) ...[
-          const SizedBox(height: 16),
-          Card(child: Padding(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [Icon(Icons.payments_outlined, color: Colors.green.shade600), const SizedBox(width: 10), const Text('Dividendos', style: TextStyle(color: ink, fontSize: 18, fontWeight: FontWeight.w900))]),
-            const SizedBox(height: 12),
-            Text('Dividend Yield: ${(current.dividendYield! * 100).toStringAsFixed(2)}%', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-            const SizedBox(height: 8),
-            Text('Se você investir R\$ 1.000 hoje, a projeção com base no último ano é receber aproximadamente R\$ ${(1000 * current.dividendYield!).toStringAsFixed(2)} em proventos nos próximos 12 meses.', style: const TextStyle(color: Colors.blueGrey, height: 1.4)),
-          ]))),
+        actions: [
+          AnimatedBuilder(
+              animation: widget.state.portfolioState,
+              builder: (_, __) => IconButton(
+                    onPressed: () =>
+                        widget.state.toggleFavorite(current.symbol),
+                    icon: Icon(
+                        widget.state.favorites.contains(current.symbol)
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        color: const Color(0xFFFFB020)),
+                  )),
+          const SizedBox(width: 8)
         ],
-        const SizedBox(height: 16),
-        _BuyCard(state: widget.state, stock: current),
-      ]),
+      ),
+      body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+          children: [
+            Text(current.name,
+                style: const TextStyle(color: Colors.blueGrey, fontSize: 15)),
+            const SizedBox(height: 14),
+            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text(money(current.price),
+                  style: const TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                      color: ink,
+                      letterSpacing: -1)),
+              const SizedBox(width: 12),
+              Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                        color: (up ? positive : negative).withValues(alpha: .1),
+                        borderRadius: BorderRadius.circular(10)),
+                    child: Text(formatPercent(current.changePercent),
+                        style: TextStyle(
+                            color: up ? positive : negative,
+                            fontWeight: FontWeight.w800)),
+                  )),
+            ]),
+            const SizedBox(height: 26),
+            Card(
+                child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Expanded(
+                                child: Text(
+                                    'Histórico • ${periods[selectedRange]}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        color: ink))),
+                            if (chartLoading)
+                              const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2)),
+                          ]),
+                          const SizedBox(height: 16),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: periods.entries
+                                .map((period) => ChoiceChip(
+                                      label: Text(period.value),
+                                      selected: selectedRange == period.key,
+                                      onSelected: chartLoading
+                                          ? null
+                                          : (_) => _load(period.key),
+                                    ))
+                                .toList(),
+                          ),
+                          if (current.history.isNotEmpty) ...[
+                            const SizedBox(height: 14),
+                            Text(
+                              '${_fullDate(current.history.first.date)} — '
+                              '${_fullDate(current.history.last.date)}  •  '
+                              '${current.history.length} pregões',
+                              style: const TextStyle(
+                                  color: Colors.blueGrey, fontSize: 12),
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            height: selectedRange == '1y' ? 340 : 270,
+                            child: current.history.isEmpty
+                                ? _ChartLoading(
+                                    error: error, loading: chartLoading)
+                                : _PriceChart(
+                                    stock: current,
+                                    range: selectedRange,
+                                  ),
+                          ),
+                        ]))),
+            const SizedBox(height: 16),
+            Card(
+                child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(children: [
+                            Icon(Icons.monitor_heart_outlined, color: primary),
+                            SizedBox(width: 10),
+                            Text('Saúde da Empresa',
+                                style: TextStyle(
+                                    color: ink,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900))
+                          ]),
+                          const SizedBox(height: 16),
+                          Row(children: [
+                            Expanded(
+                                child: _Metric(
+                                    label: 'P/L',
+                                    value: current.trailingPE
+                                            ?.toStringAsFixed(2) ??
+                                        '—')),
+                            Container(
+                                width: 1,
+                                height: 38,
+                                color: Colors.blueGrey.shade100),
+                            Expanded(
+                                child: _Metric(
+                                    label: 'P/VP',
+                                    value: current.priceToBook
+                                            ?.toStringAsFixed(2) ??
+                                        '—')),
+                            Container(
+                                width: 1,
+                                height: 38,
+                                color: Colors.blueGrey.shade100),
+                            Expanded(
+                                child: _Metric(
+                                    label: 'Margem',
+                                    value: current.profitMargins != null
+                                        ? '${(current.profitMargins! * 100).toStringAsFixed(1)}%'
+                                        : '—')),
+                          ]),
+                          const SizedBox(height: 16),
+                          Row(children: [
+                            Expanded(
+                                child: _Metric(
+                                    label: 'V. Mercado',
+                                    value: current.marketCap == null
+                                        ? '—'
+                                        : _compact(current.marketCap!))),
+                            Container(
+                                width: 1,
+                                height: 38,
+                                color: Colors.blueGrey.shade100),
+                            Expanded(
+                                child: _Metric(
+                                    label: 'Dívida',
+                                    value: current.totalDebt == null
+                                        ? '—'
+                                        : _compact(current.totalDebt!))),
+                            Container(
+                                width: 1,
+                                height: 38,
+                                color: Colors.blueGrey.shade100),
+                            Expanded(
+                                child: _Metric(
+                                    label: 'Caixa',
+                                    value: current.totalCash == null
+                                        ? '—'
+                                        : _compact(current.totalCash!))),
+                          ]),
+                        ]))),
+            if (current.dividendYield != null &&
+                current.dividendYield! > 0) ...[
+              const SizedBox(height: 16),
+              Card(
+                  child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [
+                              Icon(Icons.payments_outlined,
+                                  color: Colors.green.shade600),
+                              const SizedBox(width: 10),
+                              const Text('Dividendos',
+                                  style: TextStyle(
+                                      color: ink,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900))
+                            ]),
+                            const SizedBox(height: 12),
+                            Text(
+                                'Dividend Yield: ${(current.dividendYield! * 100).toStringAsFixed(2)}%',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w800, fontSize: 16)),
+                            const SizedBox(height: 8),
+                            Text(
+                                'Se você investir R\$ 1.000 hoje, a projeção com base no último ano é receber aproximadamente R\$ ${(1000 * current.dividendYield!).toStringAsFixed(2)} em proventos nos próximos 12 meses.',
+                                style: const TextStyle(
+                                    color: Colors.blueGrey, height: 1.4)),
+                          ]))),
+            ],
+            const SizedBox(height: 16),
+            _BuyCard(state: widget.state, stock: current),
+          ]),
     );
   }
 }
@@ -350,7 +474,10 @@ class _PriceChart extends StatelessWidget {
   final String range;
   @override
   Widget build(BuildContext context) {
-    final spots = [for (var i = 0; i < stock.history.length; i++) FlSpot(i.toDouble(), stock.history[i].close)];
+    final spots = [
+      for (var i = 0; i < stock.history.length; i++)
+        FlSpot(i.toDouble(), stock.history[i].close)
+    ];
     final rising = stock.history.last.close >= stock.history.first.close;
     final color = rising ? positive : negative;
     final labelDivisions = range == '1y' ? 6 : 4;
@@ -359,13 +486,17 @@ class _PriceChart extends StatelessWidget {
         : 1.0;
     return LineChart(LineChartData(
       minX: 0,
-      maxX: stock.history.length > 1
-          ? (stock.history.length - 1).toDouble()
-          : 1,
-      gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (_) => FlLine(color: const Color(0xFFEFF1F7), strokeWidth: 1)),
+      maxX:
+          stock.history.length > 1 ? (stock.history.length - 1).toDouble() : 1,
+      gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: const Color(0xFFEFF1F7), strokeWidth: 1)),
       titlesData: FlTitlesData(
         leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles:
+            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
@@ -388,15 +519,37 @@ class _PriceChart extends StatelessWidget {
         ),
       ),
       borderData: FlBorderData(show: false),
-      lineTouchData: LineTouchData(touchTooltipData: LineTouchTooltipData(getTooltipColor: (_) => ink, getTooltipItems: (items) => items.map((item) {
-        final index = item.x.round().clamp(0, stock.history.length - 1);
-        final date = stock.history[index].date;
-        return LineTooltipItem(
-          '${_fullDate(date)}\n${money(item.y)}',
-          const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-        );
-      }).toList())),
-      lineBarsData: [LineChartBarData(spots: spots, isCurved: true, curveSmoothness: .2, color: color, barWidth: 3, dotData: const FlDotData(show: false), belowBarData: BarAreaData(show: true, gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [color.withValues(alpha: .25), color.withValues(alpha: 0)])))],
+      lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (_) => ink,
+              getTooltipItems: (items) => items.map((item) {
+                    final index =
+                        item.x.round().clamp(0, stock.history.length - 1);
+                    final date = stock.history[index].date;
+                    return LineTooltipItem(
+                      '${_fullDate(date)}\n${money(item.y)}',
+                      const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.w700),
+                    );
+                  }).toList())),
+      lineBarsData: [
+        LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            curveSmoothness: .2,
+            color: color,
+            barWidth: 3,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+                show: true,
+                gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      color.withValues(alpha: .25),
+                      color.withValues(alpha: 0)
+                    ])))
+      ],
     ));
   }
 }
@@ -409,7 +562,10 @@ class _ChartLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (error != null) {
-      return Center(child: Text(error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.blueGrey)));
+      return Center(
+          child: Text(error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.blueGrey)));
     }
     if (loading) return const Center(child: CircularProgressIndicator());
     return const Center(
@@ -427,7 +583,13 @@ class _Metric extends StatelessWidget {
   final String label;
   final String value;
   @override
-  Widget build(BuildContext context) => Column(children: [Text(label, style: const TextStyle(color: Colors.blueGrey, fontSize: 12)), const SizedBox(height: 5), Text(value, style: const TextStyle(color: ink, fontWeight: FontWeight.w800))]);
+  Widget build(BuildContext context) => Column(children: [
+        Text(label,
+            style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
+        const SizedBox(height: 5),
+        Text(value,
+            style: const TextStyle(color: ink, fontWeight: FontWeight.w800))
+      ]);
 }
 
 String _compact(double value) {
@@ -442,5 +604,4 @@ String _dayMonth(DateTime date) =>
 String _monthYear(DateTime date) =>
     '${date.month.toString().padLeft(2, '0')}/${date.year.toString().substring(2)}';
 
-String _fullDate(DateTime date) =>
-    '${_dayMonth(date)}/${date.year.toString()}';
+String _fullDate(DateTime date) => '${_dayMonth(date)}/${date.year.toString()}';

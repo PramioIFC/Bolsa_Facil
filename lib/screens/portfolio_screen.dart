@@ -16,11 +16,12 @@ class PortfolioScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-        animation: state,
+        animation: state.marketAndPortfolio,
         builder: (context, _) {
           final items = state.portfolio;
           final invested = items.fold(0.0, (sum, item) => sum + item.invested);
-          final current = items.fold(0.0, (sum, item) => sum + _priceOf(item) * item.quantity);
+          final current = items.fold(
+              0.0, (sum, item) => sum + _priceOf(item) * item.quantity);
           return Scaffold(
             backgroundColor: Colors.transparent,
             floatingActionButton: FloatingActionButton.extended(
@@ -31,7 +32,9 @@ class PortfolioScreen extends StatelessWidget {
             body: ListView(
               padding: const EdgeInsets.fromLTRB(20, 28, 20, 90),
               children: [
-                const Text('Carteira simulada', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: ink)),
+                const Text('Carteira simulada',
+                    style: TextStyle(
+                        fontSize: 26, fontWeight: FontWeight.w900, color: ink)),
                 const SizedBox(height: 18),
                 _Summary(
                   invested: invested,
@@ -43,12 +46,15 @@ class PortfolioScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   _AllocationCard(
                     slices: [
-                      for (final item in items) (item.symbol, _priceOf(item) * item.quantity),
+                      for (final item in items)
+                        (item.symbol, _priceOf(item) * item.quantity),
                     ],
                   ),
                 ],
                 const SizedBox(height: 24),
-                const Text('Suas posições', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: ink)),
+                const Text('Suas posições',
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.w800, color: ink)),
                 const SizedBox(height: 12),
                 if (items.isEmpty)
                   const _EmptyPortfolio()
@@ -72,10 +78,12 @@ class PortfolioScreen extends StatelessWidget {
       state.stockFor(item.symbol)?.price ?? item.averagePrice;
 
   void _snack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _onAction(BuildContext context, PortfolioItem item, String action) async {
+  Future<void> _onAction(
+      BuildContext context, PortfolioItem item, String action) async {
     switch (action) {
       case 'edit':
         await _positionDialog(context, item);
@@ -90,7 +98,8 @@ class PortfolioScreen extends StatelessWidget {
 
   Future<void> _openDetails(BuildContext context, PortfolioItem item) async {
     try {
-      final stock = state.stockFor(item.symbol) ?? await state.search(item.symbol);
+      final stock =
+          state.stockFor(item.symbol) ?? await state.search(item.symbol);
       if (!context.mounted || stock == null) return;
       await Navigator.of(context).push(
         MaterialPageRoute(
@@ -102,7 +111,8 @@ class PortfolioScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _positionDialog(BuildContext context, [PortfolioItem? existing]) async {
+  Future<void> _positionDialog(BuildContext context,
+      [PortfolioItem? existing]) async {
     final result = await showDialog<PortfolioItem>(
       context: context,
       builder: (_) => _PositionDialog(existing: existing),
@@ -122,8 +132,11 @@ class PortfolioScreen extends StatelessWidget {
     );
     if (result == null) return;
     try {
-      await state.sell(item.symbol, result.quantity, result.price, fees: result.fees);
-      if (context.mounted) _snack(context, 'Venda de ${item.symbol} registrada.');
+      await state.sell(item.symbol, result.quantity, result.price,
+          fees: result.fees);
+      if (context.mounted) {
+        _snack(context, 'Venda de ${item.symbol} registrada.');
+      }
     } catch (error) {
       if (context.mounted) _snack(context, error.toString());
     }
@@ -140,10 +153,14 @@ class PortfolioScreen extends StatelessWidget {
             future: state.tradesFor(item.symbol),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
-                return const SizedBox(height: 80, child: Center(child: CircularProgressIndicator()));
+                return const SizedBox(
+                    height: 80,
+                    child: Center(child: CircularProgressIndicator()));
               }
               final trades = snapshot.data ?? const <Trade>[];
-              if (trades.isEmpty) return const Text('Nenhuma operação registrada.');
+              if (trades.isEmpty) {
+                return const Text('Nenhuma operação registrada.');
+              }
               final date = DateFormat('dd/MM/yyyy HH:mm');
               return ListView(
                 shrinkWrap: true,
@@ -152,7 +169,8 @@ class PortfolioScreen extends StatelessWidget {
                     ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      title: Text('${trade.type.label} • ${formatDecimal(trade.quantity)} × ${money(trade.price)}'),
+                      title: Text(
+                          '${trade.type.label} • ${formatDecimal(trade.quantity)} × ${money(trade.price)}'),
                       subtitle: Text(
                         '${date.format(trade.executedAt.toLocal())}'
                         '${trade.fees > 0 ? ' • taxas ${money(trade.fees)}' : ''}',
@@ -164,7 +182,9 @@ class PortfolioScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Fechar')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Fechar')),
         ],
       ),
     );
@@ -175,10 +195,15 @@ class PortfolioScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text('Remover ${item.symbol}?'),
-        content: const Text('A posição e todo o histórico de operações desse ativo serão apagados.'),
+        content: const Text(
+            'A posição e todo o histórico de operações desse ativo serão apagados.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Remover')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Remover')),
         ],
       ),
     );
@@ -191,7 +216,8 @@ class PortfolioScreen extends StatelessWidget {
   }
 }
 
-double? _parse(String text) => double.tryParse(text.trim().replaceAll(',', '.'));
+double? _parse(String text) =>
+    double.tryParse(text.trim().replaceAll(',', '.'));
 
 class _PositionDialog extends StatefulWidget {
   const _PositionDialog({this.existing});
@@ -210,9 +236,13 @@ class _PositionDialogState extends State<_PositionDialog> {
   void initState() {
     super.initState();
     symbol = TextEditingController(text: widget.existing?.symbol ?? '');
-    quantity = TextEditingController(text: widget.existing?.quantity.toString() ?? '');
+    quantity =
+        TextEditingController(text: widget.existing?.quantity.toString() ?? '');
     price = TextEditingController(
-      text: widget.existing?.averagePrice.toStringAsFixed(2).replaceAll('.', ',') ?? '',
+      text: widget.existing?.averagePrice
+              .toStringAsFixed(2)
+              .replaceAll('.', ',') ??
+          '',
     );
   }
 
@@ -233,7 +263,8 @@ class _PositionDialogState extends State<_PositionDialog> {
           controller: symbol,
           enabled: widget.existing == null,
           textCapitalization: TextCapitalization.characters,
-          decoration: const InputDecoration(labelText: 'Código da ação', hintText: 'PETR4'),
+          decoration: const InputDecoration(
+              labelText: 'Código da ação', hintText: 'PETR4'),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -245,18 +276,28 @@ class _PositionDialogState extends State<_PositionDialog> {
         TextField(
           controller: price,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Preço médio de compra', prefixText: r'R$ '),
+          decoration: const InputDecoration(
+              labelText: 'Preço médio de compra', prefixText: r'R$ '),
         ),
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar')),
         FilledButton(
           onPressed: () {
             final qty = _parse(quantity.text);
             final avg = _parse(price.text);
             final ticker = symbol.text.trim().toUpperCase();
-            if (ticker.isNotEmpty && qty != null && qty > 0 && avg != null && avg > 0) {
-              Navigator.pop(context, PortfolioItem(symbol: ticker, quantity: qty, averagePrice: avg));
+            if (ticker.isNotEmpty &&
+                qty != null &&
+                qty > 0 &&
+                avg != null &&
+                avg > 0) {
+              Navigator.pop(
+                  context,
+                  PortfolioItem(
+                      symbol: ticker, quantity: qty, averagePrice: avg));
             }
           },
           child: const Text('Salvar'),
@@ -292,7 +333,8 @@ class _SellDialogState extends State<_SellDialog> {
   void initState() {
     super.initState();
     quantity = TextEditingController(text: widget.item.quantity.toString());
-    price = TextEditingController(text: widget.suggestedPrice.toStringAsFixed(2).replaceAll('.', ','));
+    price = TextEditingController(
+        text: widget.suggestedPrice.toStringAsFixed(2).replaceAll('.', ','));
   }
 
   @override
@@ -311,19 +353,22 @@ class _SellDialogState extends State<_SellDialog> {
         TextField(
           controller: quantity,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(labelText: 'Quantidade (máx. ${widget.item.quantity})'),
+          decoration: InputDecoration(
+              labelText: 'Quantidade (máx. ${widget.item.quantity})'),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: price,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Preço de venda', prefixText: r'R$ '),
+          decoration: const InputDecoration(
+              labelText: 'Preço de venda', prefixText: r'R$ '),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: fees,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Taxas (opcional)', prefixText: r'R$ '),
+          decoration: const InputDecoration(
+              labelText: 'Taxas (opcional)', prefixText: r'R$ '),
         ),
         if (error != null) ...[
           const SizedBox(height: 10),
@@ -331,13 +376,19 @@ class _SellDialogState extends State<_SellDialog> {
         ],
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar')),
         FilledButton(
           onPressed: () {
             final qty = _parse(quantity.text);
             final sellPrice = _parse(price.text);
             final fee = _parse(fees.text) ?? 0;
-            if (qty == null || qty <= 0 || sellPrice == null || sellPrice < 0 || fee < 0) {
+            if (qty == null ||
+                qty <= 0 ||
+                sellPrice == null ||
+                sellPrice < 0 ||
+                fee < 0) {
               setState(() => error = 'Confira quantidade, preço e taxas.');
               return;
             }
@@ -372,19 +423,34 @@ class _Summary extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF38344B),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: primary.withValues(alpha: 0.24), blurRadius: 24, offset: const Offset(0, 10))],
+        boxShadow: [
+          BoxShadow(
+              color: primary.withValues(alpha: 0.24),
+              blurRadius: 24,
+              offset: const Offset(0, 10))
+        ],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Valor atual', style: TextStyle(color: Colors.white70)),
         const SizedBox(height: 5),
-        Text(money(current), style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900)),
+        Text(money(current),
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 30,
+                fontWeight: FontWeight.w900)),
         const SizedBox(height: 20),
         Row(children: [
-          Expanded(child: _WhiteMetric(label: 'Investido', value: money(invested))),
-          Expanded(child: _WhiteMetric(label: up ? 'Lucro' : 'Prejuízo', value: '${up ? '+' : ''}${money(profit)}')),
+          Expanded(
+              child: _WhiteMetric(label: 'Investido', value: money(invested))),
+          Expanded(
+              child: _WhiteMetric(
+                  label: up ? 'Lucro' : 'Prejuízo',
+                  value: '${up ? '+' : ''}${money(profit)}')),
         ]),
         const SizedBox(height: 14),
-        _WhiteMetric(label: 'Resultado realizado (vendas)', value: '${realized >= 0 ? '+' : ''}${money(realized)}'),
+        _WhiteMetric(
+            label: 'Resultado realizado (vendas)',
+            value: '${realized >= 0 ? '+' : ''}${money(realized)}'),
       ]),
     );
   }
@@ -395,10 +461,14 @@ class _WhiteMetric extends StatelessWidget {
   final String label, value;
 
   @override
-  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+  Widget build(BuildContext context) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label,
+            style: const TextStyle(color: Colors.white70, fontSize: 12)),
         const SizedBox(height: 3),
-        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        Text(value,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w800)),
       ]);
 }
 
@@ -427,7 +497,8 @@ class _AllocationCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Alocação', style: TextStyle(fontWeight: FontWeight.w800, color: ink)),
+          const Text('Alocação',
+              style: TextStyle(fontWeight: FontWeight.w800, color: ink)),
           const SizedBox(height: 12),
           SizedBox(
             height: 150,
@@ -443,7 +514,10 @@ class _AllocationCard extends StatelessWidget {
                     title: valid[i].$2 / total >= 0.07
                         ? '${(valid[i].$2 / total * 100).toStringAsFixed(0)}%'
                         : '',
-                    titleStyle: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                    titleStyle: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800),
                   ),
               ],
             )),
@@ -452,9 +526,16 @@ class _AllocationCard extends StatelessWidget {
           Wrap(spacing: 14, runSpacing: 6, children: [
             for (var i = 0; i < valid.length; i++)
               Row(mainAxisSize: MainAxisSize.min, children: [
-                Container(width: 10, height: 10, decoration: BoxDecoration(color: _palette[i % _palette.length], shape: BoxShape.circle)),
+                Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                        color: _palette[i % _palette.length],
+                        shape: BoxShape.circle)),
                 const SizedBox(width: 6),
-                Text(valid[i].$1, style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
+                Text(valid[i].$1,
+                    style:
+                        const TextStyle(fontSize: 12, color: Colors.blueGrey)),
               ]),
           ]),
         ]),
@@ -478,7 +559,8 @@ class _PositionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final result = (price - item.averagePrice) * item.quantity;
-    final percent = item.averagePrice > 0 ? (price / item.averagePrice - 1) * 100 : 0.0;
+    final percent =
+        item.averagePrice > 0 ? (price / item.averagePrice - 1) * 100 : 0.0;
     final color = result >= 0 ? positive : negative;
     return Card(
       child: InkWell(
@@ -488,20 +570,30 @@ class _PositionCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(children: [
             Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(item.symbol, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: ink)),
-                const SizedBox(height: 5),
-                Text(
-                  '${formatDecimal(item.quantity)} ações • PM ${money(item.averagePrice)}',
-                  style: const TextStyle(color: Colors.blueGrey, fontSize: 12),
-                ),
-              ]),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.symbol,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 17,
+                            color: ink)),
+                    const SizedBox(height: 5),
+                    Text(
+                      '${formatDecimal(item.quantity)} ações • PM ${money(item.averagePrice)}',
+                      style:
+                          const TextStyle(color: Colors.blueGrey, fontSize: 12),
+                    ),
+                  ]),
             ),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(money(price * item.quantity), style: const TextStyle(fontWeight: FontWeight.w800, color: ink)),
+              Text(money(price * item.quantity),
+                  style:
+                      const TextStyle(fontWeight: FontWeight.w800, color: ink)),
               Text(
                 '${result >= 0 ? '+' : ''}${money(result)} (${formatPercent(percent)})',
-                style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12),
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.w700, fontSize: 12),
               ),
             ]),
             PopupMenuButton<String>(
@@ -509,7 +601,8 @@ class _PositionCard extends StatelessWidget {
               itemBuilder: (_) => const [
                 PopupMenuItem(value: 'sell', child: Text('Vender')),
                 PopupMenuItem(value: 'history', child: Text('Histórico')),
-                PopupMenuItem(value: 'edit', child: Text('Editar (ajuste manual)')),
+                PopupMenuItem(
+                    value: 'edit', child: Text('Editar (ajuste manual)')),
                 PopupMenuItem(value: 'remove', child: Text('Remover')),
               ],
             ),

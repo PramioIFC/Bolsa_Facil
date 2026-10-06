@@ -42,7 +42,7 @@ class _BolsaFacilAppState extends State<BolsaFacilApp> {
         debugShowCheckedModeBanner: false,
         theme: buildTheme(),
         home: AnimatedBuilder(
-          animation: state,
+          animation: state.authState,
           builder: (context, _) {
             if (state.initializing) {
               return const Scaffold(
