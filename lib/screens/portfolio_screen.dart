@@ -32,9 +32,11 @@ class PortfolioScreen extends StatelessWidget {
             body: ListView(
               padding: const EdgeInsets.fromLTRB(20, 28, 20, 90),
               children: [
-                const Text('Carteira simulada',
+                Text('Carteira simulada',
                     style: TextStyle(
-                        fontSize: 26, fontWeight: FontWeight.w900, color: ink)),
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 18),
                 _Summary(
                   invested: invested,
@@ -52,9 +54,11 @@ class PortfolioScreen extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 24),
-                const Text('Suas posições',
+                Text('Suas posições',
                     style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w800, color: ink)),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 12),
                 if (items.isEmpty)
                   const _EmptyPortfolio()
@@ -372,7 +376,8 @@ class _SellDialogState extends State<_SellDialog> {
         ),
         if (error != null) ...[
           const SizedBox(height: 10),
-          Text(error!, style: const TextStyle(color: negative)),
+          Text(error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error)),
         ],
       ]),
       actions: [
@@ -425,7 +430,8 @@ class _Summary extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-              color: primary.withValues(alpha: 0.24),
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.24),
               blurRadius: 24,
               offset: const Offset(0, 10))
         ],
@@ -497,8 +503,10 @@ class _AllocationCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Alocação',
-              style: TextStyle(fontWeight: FontWeight.w800, color: ink)),
+          Text('Alocação',
+              style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 12),
           SizedBox(
             height: 150,
@@ -534,8 +542,9 @@ class _AllocationCard extends StatelessWidget {
                         shape: BoxShape.circle)),
                 const SizedBox(width: 6),
                 Text(valid[i].$1,
-                    style:
-                        const TextStyle(fontSize: 12, color: Colors.blueGrey)),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ]),
           ]),
         ]),
@@ -561,7 +570,7 @@ class _PositionCard extends StatelessWidget {
     final result = (price - item.averagePrice) * item.quantity;
     final percent =
         item.averagePrice > 0 ? (price / item.averagePrice - 1) * 100 : 0.0;
-    final color = result >= 0 ? positive : negative;
+    final color = result >= 0 ? positiveColor(context) : negativeColor(context);
     return Card(
       child: InkWell(
         onTap: onTap,
@@ -574,22 +583,24 @@ class _PositionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(item.symbol,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 17,
-                            color: ink)),
+                            color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 5),
                     Text(
                       '${formatDecimal(item.quantity)} ações • PM ${money(item.averagePrice)}',
-                      style:
-                          const TextStyle(color: Colors.blueGrey, fontSize: 12),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12),
                     ),
                   ]),
             ),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Text(money(price * item.quantity),
-                  style:
-                      const TextStyle(fontWeight: FontWeight.w800, color: ink)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onSurface)),
               Text(
                 '${result >= 0 ? '+' : ''}${money(result)} (${formatPercent(percent)})',
                 style: TextStyle(
@@ -617,13 +628,15 @@ class _EmptyPortfolio extends StatelessWidget {
   const _EmptyPortfolio();
 
   @override
-  Widget build(BuildContext context) => const Padding(
+  Widget build(BuildContext context) => Padding(
         padding: EdgeInsets.symmetric(vertical: 40),
         child: Center(
           child: Text(
             'Sua simulação começa aqui.\nAdicione uma posição para acompanhar.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.blueGrey, height: 1.5),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5),
           ),
         ),
       );

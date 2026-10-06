@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../state/app_state.dart';
+import '../state/settings_state.dart';
 import 'account_screen.dart';
 import 'favorites_screen.dart';
 import 'home_screen.dart';
 import 'portfolio_screen.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.state});
+  const AppShell({super.key, required this.state, this.settings});
   final AppState state;
+  final SettingsState? settings;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -46,7 +48,7 @@ class _AppShellState extends State<AppShell> {
       HomeScreen(state: widget.state),
       FavoritesScreen(state: widget.state),
       PortfolioScreen(state: widget.state),
-      AccountScreen(state: widget.state),
+      AccountScreen(state: widget.state, settings: widget.settings),
     ];
     return Scaffold(
       body: SafeArea(child: IndexedStack(index: index, children: pages)),

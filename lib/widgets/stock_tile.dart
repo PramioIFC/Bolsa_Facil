@@ -31,22 +31,48 @@ class StockTile extends StatelessWidget {
             _Logo(stock: stock),
             const SizedBox(width: 14),
             Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(stock.symbol, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ink)),
-                const SizedBox(height: 4),
-                Text(stock.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.blueGrey.shade500, fontSize: 13)),
-              ]),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(stock.symbol,
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).colorScheme.onSurface)),
+                    const SizedBox(height: 4),
+                    Text(stock.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 13)),
+                  ]),
             ),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(formatMoney(stock.price), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ink)),
+              Text(formatMoney(stock.price),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 4),
-              Text(formatPercent(stock.changePercent), style: TextStyle(color: up ? positive : negative, fontWeight: FontWeight.w700)),
+              Text(formatPercent(stock.changePercent),
+                  style: TextStyle(
+                      color:
+                          up ? positiveColor(context) : negativeColor(context),
+                      fontWeight: FontWeight.w700)),
             ]),
             const SizedBox(width: 6),
             IconButton(
-              tooltip: isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos',
+              tooltip: isFavorite
+                  ? 'Remover dos favoritos'
+                  : 'Adicionar aos favoritos',
               onPressed: onFavorite,
-              icon: Icon(isFavorite ? Icons.star_rounded : Icons.star_outline_rounded, color: isFavorite ? const Color(0xFFFFB020) : Colors.blueGrey.shade300),
+              icon: Icon(
+                  isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                  color: isFavorite
+                      ? const Color(0xFFFFB020)
+                      : Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ]),
         ),
@@ -64,20 +90,28 @@ class _Logo extends StatelessWidget {
         height: 48,
         width: 48,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: const Color(0xFFF0EFFF), borderRadius: BorderRadius.circular(14)),
+        decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(14)),
         child: stock.logoUrl != null
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.network(stock.logoUrl!, width: 34, height: 34, fit: BoxFit.contain, errorBuilder: (_, __, ___) => _letters()),
+                child: Image.network(stock.logoUrl!,
+                    width: 34,
+                    height: 34,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => _letters(context)),
               )
-            : _letters(),
+            : _letters(context),
       );
 
-  Widget _letters() {
+  Widget _letters(BuildContext context) {
     final end = stock.symbol.length < 2 ? stock.symbol.length : 2;
     return Text(
       stock.symbol.substring(0, end),
-      style: const TextStyle(color: primary, fontWeight: FontWeight.w900),
+      style: TextStyle(
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.w900),
     );
   }
 }

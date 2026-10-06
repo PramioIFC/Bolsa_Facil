@@ -14,7 +14,7 @@ Leia, nesta ordem: `TECHNICAL_DOCS.md` (arquitetura atual), `MELHORIAS.md` (o qu
 |---|---|
 | `flutter pub get` e setup SQLite Web | passaram (`sqflite_common_ffi_web 1.2.0`) |
 | `flutter analyze` | No issues found |
-| `flutter test` | 90 testes passaram |
+| `flutter test` | 103 testes passaram |
 | Build Web release (base 8080 e 8081) | passou |
 | Web em uso real | cadastro, favorito, compra/venda/histórico, F5 com sessão/carteira e cache sem proxy passaram |
 | Autocomplete na API real | `stocks[].stock/name/logo` confirmado; `/v2/tickers` também respondeu, mas o endpoint atual foi mantido |
@@ -40,7 +40,7 @@ Comandos do smoke e da migração real estão em `TECHNICAL_DOCS.md`. Segurança
 ## Estado das pendências de produto
 
 1. **Concluída:** estados Auth/Market/Portfolio com facade compatível e injeção por construtor. Quatorze testes de limites e concorrência; sem dependência adicional.
-2. Tema escuro (cores fixas em `lib/theme.dart` e nas telas).
+2. **Concluída:** temas Sistema/Claro/Escuro com preferência SQLite (schema v5), cores adaptadas e Conta rolável.
 3. Alertas de preço-alvo (notificações locais).
 4. Ordenação/filtro nas listas.
 5. Telas com outros dados da brapi (dividendos, câmbio, inflação).

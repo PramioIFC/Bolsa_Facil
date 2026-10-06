@@ -83,14 +83,16 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
           children: [
             Text(current.name,
-                style: const TextStyle(color: Colors.blueGrey, fontSize: 15)),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 15)),
             const SizedBox(height: 14),
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Text(money(current.price),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 34,
                       fontWeight: FontWeight.w900,
-                      color: ink,
+                      color: Theme.of(context).colorScheme.onSurface,
                       letterSpacing: -1)),
               const SizedBox(width: 12),
               Padding(
@@ -99,11 +101,16 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                        color: (up ? positive : negative).withValues(alpha: .1),
+                        color: (up
+                                ? positiveColor(context)
+                                : negativeColor(context))
+                            .withValues(alpha: .1),
                         borderRadius: BorderRadius.circular(10)),
                     child: Text(formatPercent(current.changePercent),
                         style: TextStyle(
-                            color: up ? positive : negative,
+                            color: up
+                                ? positiveColor(context)
+                                : negativeColor(context),
                             fontWeight: FontWeight.w800)),
                   )),
             ]),
@@ -118,9 +125,11 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                             Expanded(
                                 child: Text(
                                     'Histórico • ${periods[selectedRange]}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontWeight: FontWeight.w800,
-                                        color: ink))),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface))),
                             if (chartLoading)
                               const SizedBox(
                                   width: 18,
@@ -148,8 +157,11 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                               '${_fullDate(current.history.first.date)} — '
                               '${_fullDate(current.history.last.date)}  •  '
                               '${current.history.length} pregões',
-                              style: const TextStyle(
-                                  color: Colors.blueGrey, fontSize: 12),
+                              style: TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                  fontSize: 12),
                             ),
                           ],
                           const SizedBox(height: 20),
@@ -171,12 +183,14 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(children: [
-                            Icon(Icons.monitor_heart_outlined, color: primary),
+                          Row(children: [
+                            Icon(Icons.monitor_heart_outlined,
+                                color: Theme.of(context).colorScheme.primary),
                             SizedBox(width: 10),
                             Text('Saúde da Empresa',
                                 style: TextStyle(
-                                    color: ink,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900))
                           ]),
@@ -191,7 +205,9 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                             Container(
                                 width: 1,
                                 height: 38,
-                                color: Colors.blueGrey.shade100),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant),
                             Expanded(
                                 child: _Metric(
                                     label: 'P/VP',
@@ -201,7 +217,9 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                             Container(
                                 width: 1,
                                 height: 38,
-                                color: Colors.blueGrey.shade100),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant),
                             Expanded(
                                 child: _Metric(
                                     label: 'Margem',
@@ -220,7 +238,9 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                             Container(
                                 width: 1,
                                 height: 38,
-                                color: Colors.blueGrey.shade100),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant),
                             Expanded(
                                 child: _Metric(
                                     label: 'Dívida',
@@ -230,7 +250,9 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                             Container(
                                 width: 1,
                                 height: 38,
-                                color: Colors.blueGrey.shade100),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant),
                             Expanded(
                                 child: _Metric(
                                     label: 'Caixa',
@@ -250,11 +272,13 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                           children: [
                             Row(children: [
                               Icon(Icons.payments_outlined,
-                                  color: Colors.green.shade600),
+                                  color: positiveColor(context)),
                               const SizedBox(width: 10),
-                              const Text('Dividendos',
+                              Text('Dividendos',
                                   style: TextStyle(
-                                      color: ink,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                       fontSize: 18,
                                       fontWeight: FontWeight.w900))
                             ]),
@@ -266,8 +290,11 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                             const SizedBox(height: 8),
                             Text(
                                 'Se você investir R\$ 1.000 hoje, a projeção com base no último ano é receber aproximadamente R\$ ${(1000 * current.dividendYield!).toStringAsFixed(2)} em proventos nos próximos 12 meses.',
-                                style: const TextStyle(
-                                    color: Colors.blueGrey, height: 1.4)),
+                                style: TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    height: 1.4)),
                           ]))),
             ],
             const SizedBox(height: 16),
@@ -341,14 +368,15 @@ class _BuyCardState extends State<_BuyCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.shopping_cart_outlined, color: primary),
+                Icon(Icons.shopping_cart_outlined,
+                    color: Theme.of(context).colorScheme.primary),
                 SizedBox(width: 10),
                 Text(
                   'Compra simulada',
                   style: TextStyle(
-                    color: ink,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                   ),
@@ -356,9 +384,10 @@ class _BuyCardState extends State<_BuyCard> {
               ],
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Adicione esta ação à sua carteira pelo preço atual.',
-              style: TextStyle(color: Colors.blueGrey),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
             LayoutBuilder(
@@ -417,11 +446,13 @@ class _BuyCardState extends State<_BuyCard> {
               ),
             ),
             const SizedBox(height: 10),
-            const Center(
+            Center(
               child: Text(
                 'Simulação educacional — nenhuma ordem real será enviada.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12),
               ),
             ),
           ],
@@ -443,7 +474,7 @@ class _OrderTotal extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0EFFF),
+        color: Theme.of(context).colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -451,13 +482,15 @@ class _OrderTotal extends StatelessWidget {
         children: [
           Text(
             'Cotação: ${money(unitPrice)}',
-            style: const TextStyle(color: Colors.blueGrey, fontSize: 12),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12),
           ),
           const SizedBox(height: 3),
           Text(
             'Total: ${money(total)}',
-            style: const TextStyle(
-              color: ink,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
               fontWeight: FontWeight.w900,
             ),
@@ -479,7 +512,7 @@ class _PriceChart extends StatelessWidget {
         FlSpot(i.toDouble(), stock.history[i].close)
     ];
     final rising = stock.history.last.close >= stock.history.first.close;
-    final color = rising ? positive : negative;
+    final color = rising ? positiveColor(context) : negativeColor(context);
     final labelDivisions = range == '1y' ? 6 : 4;
     final labelInterval = stock.history.length > 1
         ? (stock.history.length - 1) / labelDivisions
@@ -491,8 +524,9 @@ class _PriceChart extends StatelessWidget {
       gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          getDrawingHorizontalLine: (_) =>
-              FlLine(color: const Color(0xFFEFF1F7), strokeWidth: 1)),
+          getDrawingHorizontalLine: (_) => FlLine(
+              color: Theme.of(context).colorScheme.outlineVariant,
+              strokeWidth: 1)),
       titlesData: FlTitlesData(
         leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         rightTitles:
@@ -511,7 +545,9 @@ class _PriceChart extends StatelessWidget {
                 space: 9,
                 child: Text(
                   range == '1y' ? _monthYear(date) : _dayMonth(date),
-                  style: const TextStyle(color: Colors.blueGrey, fontSize: 11),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 11),
                 ),
               );
             },
@@ -521,15 +557,17 @@ class _PriceChart extends StatelessWidget {
       borderData: FlBorderData(show: false),
       lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (_) => ink,
+              getTooltipColor: (_) =>
+                  Theme.of(context).colorScheme.inverseSurface,
               getTooltipItems: (items) => items.map((item) {
                     final index =
                         item.x.round().clamp(0, stock.history.length - 1);
                     final date = stock.history[index].date;
                     return LineTooltipItem(
                       '${_fullDate(date)}\n${money(item.y)}',
-                      const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.w700),
+                      TextStyle(
+                          color: Theme.of(context).colorScheme.onInverseSurface,
+                          fontWeight: FontWeight.w700),
                     );
                   }).toList())),
       lineBarsData: [
@@ -565,14 +603,15 @@ class _ChartLoading extends StatelessWidget {
       return Center(
           child: Text(error!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.blueGrey)));
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)));
     }
     if (loading) return const Center(child: CircularProgressIndicator());
-    return const Center(
+    return Center(
       child: Text(
         'Histórico indisponível para este ativo no seu plano da brapi.',
         textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.blueGrey),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -585,10 +624,14 @@ class _Metric extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(children: [
         Text(label,
-            style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12)),
         const SizedBox(height: 5),
         Text(value,
-            style: const TextStyle(color: ink, fontWeight: FontWeight.w800))
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.w800))
       ]);
 }
 

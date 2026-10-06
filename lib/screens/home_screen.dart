@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../models/stock.dart';
 import '../state/app_state.dart';
-import '../theme.dart';
+
 import '../utils/format.dart';
 import '../widgets/stock_tile.dart';
 import 'stock_details_screen.dart';
@@ -124,17 +124,22 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverToBoxAdapter(
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
-                      const Text('Ações em destaque',
+                      Text('Ações em destaque',
                           style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
-                              color: ink)),
+                              color: Theme.of(context).colorScheme.onSurface)),
                       Text(_updatedLabel(widget.state),
                           style: TextStyle(
-                              color: Colors.blueGrey.shade400, fontSize: 12)),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                              fontSize: 12)),
                     ]),
               ),
             ),
@@ -176,16 +181,23 @@ class _Header extends StatelessWidget {
         Container(
             padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
-                color: primary, borderRadius: BorderRadius.circular(14)),
-            child: const Icon(Icons.trending_up_rounded, color: Colors.white)),
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(14)),
+            child: Icon(Icons.trending_up_rounded,
+                color: Theme.of(context).colorScheme.onPrimary)),
         const SizedBox(width: 12),
-        const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Bolsa Fácil',
               style: TextStyle(
-                  fontSize: 24, fontWeight: FontWeight.w900, color: ink)),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(context).colorScheme.onSurface)),
           Text('Invista conhecimento primeiro',
-              style: TextStyle(color: Colors.blueGrey)),
-        ]),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        ])),
       ]);
 }
 
@@ -198,8 +210,9 @@ class _ErrorState extends StatelessWidget {
       child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.cloud_off_rounded,
-                size: 54, color: Colors.blueGrey),
+            Icon(Icons.cloud_off_rounded,
+                size: 54,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
@@ -239,17 +252,20 @@ class _StatusBanner extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF4D8),
+          color: Theme.of(context).colorScheme.tertiaryContainer,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Icon(Icons.info_outline_rounded,
-              size: 18, color: Color(0xFF9A6700)),
+          Icon(Icons.info_outline_rounded,
+              size: 18,
+              color: Theme.of(context).colorScheme.onTertiaryContainer),
           const SizedBox(width: 10),
           Expanded(
             child: Text(message,
-                style: const TextStyle(
-                    fontSize: 12.5, height: 1.35, color: Color(0xFF5C4300))),
+                style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.35,
+                    color: Theme.of(context).colorScheme.onTertiaryContainer)),
           ),
         ]),
       );
@@ -268,8 +284,9 @@ class _Suggestions extends StatelessWidget {
             ListTile(
               dense: true,
               title: Text(item.symbol,
-                  style:
-                      const TextStyle(fontWeight: FontWeight.w800, color: ink)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onSurface)),
               subtitle: item.name.isEmpty
                   ? null
                   : Text(item.name,

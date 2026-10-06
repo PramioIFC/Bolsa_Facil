@@ -1,3 +1,10 @@
+# Tema claro, escuro e do sistema
+
+- Seletor de aparência na Conta; preferência global persiste entre sessões. Build Web e escolha Escuro após F5 verificados no navegador.
+- Cores das telas e gráficos seguem o tema, e Conta é rolável.
+- Schema v5 aditivo com teste de migração preservando carteira e segurança do login. Analyze limpo e 103 testes passando.
+- Teste em viewport estreito revelou overflow no cabeçalho da Home; corrigido com largura flexível e quebra natural.
+
 # Estados separados
 
 - Autenticação, mercado e carteira têm notificações independentes; telas observam os domínios necessários.
@@ -92,7 +99,7 @@ Legenda: ✅ implementado (não executado) · 🟡 parcial · ⬜ não feito.
 |---|---|
 | Formatação pt-BR com `intl` | ✅ `lib/utils/format.dart` |
 | Gráfico de alocação (pizza) e rentabilidade (% por ativo) | ✅ |
-| Tema escuro | ⬜ (cores fixas no código; exige refatorar o tema) |
+| Tema escuro | ✅ Sistema/Claro/Escuro na Conta; escolha persistente no SQLite, schema v5 |
 | Alertas de preço-alvo | ⬜ |
 | Ordenação/filtro nas listas | ⬜ |
 

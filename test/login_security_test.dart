@@ -146,7 +146,7 @@ void main() {
         authMessage('Muitas tentativas'));
   });
 
-  test('migração v3 → v4 preserva conta, sessão e favoritos', () async {
+  test('migração v3 → atual preserva conta, sessão e favoritos', () async {
     final dir = await Directory.systemTemp.createTemp('bolsa_migracao_login_');
     addTearDown(() => dir.delete(recursive: true));
     final path = '${dir.path}/legacy.db';
@@ -157,6 +157,7 @@ void main() {
     await initial.toggleFavorite(user.id, 'PETR4', true);
     final database = await initial.database;
     await database.execute('DROP TABLE login_attempts');
+    await database.execute('DROP TABLE app_settings');
     await database.setVersion(3);
     await initial.close();
     final upgraded = AppDatabase(
@@ -164,7 +165,8 @@ void main() {
     addTearDown(upgraded.close);
     expect((await upgraded.getSession())?.id, user.id);
     expect(await upgraded.getFavorites(user.id), {'PETR4'});
-    expect(await (await upgraded.database).getVersion(), 4);
+    expect(await (await upgraded.database).getVersion(),
+        AppDatabase.schemaVersion);
     await expectLater(
         upgraded.login('ana@a.com', 'errada'), authMessage('incorretos'));
     expect(

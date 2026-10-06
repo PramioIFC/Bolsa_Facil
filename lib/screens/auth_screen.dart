@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../state/app_state.dart';
-import '../theme.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key, required this.state});
@@ -31,7 +30,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _submit() async {
     if (!formKey.currentState!.validate() || submitting) return;
-    setState(() { submitting = true; error = null; });
+    setState(() {
+      submitting = true;
+      error = null;
+    });
     try {
       if (registering) {
         await widget.state.register(
@@ -68,18 +70,19 @@ class _AuthScreenState extends State<AuthScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(15),
                             decoration: BoxDecoration(
-                              color: primary,
+                              color: Theme.of(context).colorScheme.primary,
                               borderRadius: BorderRadius.circular(18),
                             ),
-                            child: const Icon(Icons.trending_up_rounded,
-                                color: Colors.white, size: 32),
+                            child: Icon(Icons.trending_up_rounded,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                size: 32),
                           ),
                         ),
                         const SizedBox(height: 18),
-                        const Text('Bolsa Fácil',
+                        Text('Bolsa Fácil',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                                color: ink,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 28,
                                 fontWeight: FontWeight.w900)),
                         const SizedBox(height: 6),
@@ -88,7 +91,10 @@ class _AuthScreenState extends State<AuthScreen> {
                               ? 'Crie sua conta para começar'
                               : 'Entre para acessar seus investimentos',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.blueGrey),
+                          style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant),
                         ),
                         const SizedBox(height: 28),
                         if (registering) ...[
@@ -97,8 +103,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
                                 labelText: 'Nome',
-                                prefixIcon:
-                                    Icon(Icons.person_outline_rounded)),
+                                prefixIcon: Icon(Icons.person_outline_rounded)),
                             validator: (value) =>
                                 value == null || value.trim().length < 2
                                     ? 'Informe seu nome.'
@@ -127,8 +132,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           onFieldSubmitted: (_) => _submit(),
                           decoration: InputDecoration(
                             labelText: 'Senha',
-                            prefixIcon:
-                                const Icon(Icons.lock_outline_rounded),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded),
                             suffixIcon: IconButton(
                               onPressed: () =>
                                   setState(() => obscure = !obscure),
@@ -146,7 +150,8 @@ class _AuthScreenState extends State<AuthScreen> {
                           const SizedBox(height: 14),
                           Text(error!,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: negative)),
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error)),
                         ],
                         const SizedBox(height: 22),
                         SizedBox(

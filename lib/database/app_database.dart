@@ -50,7 +50,7 @@ class AppDatabase {
   /// Instância usada pelo aplicativo.
   static final AppDatabase instance = AppDatabase();
 
-  static const schemaVersion = 4;
+  static const schemaVersion = 5;
 
   /// Mantém o custo configurado nas contas existentes. O cálculo usa isolate
   /// nativo ou Web Crypto na Web, sem executar o laço na thread da interface.
@@ -95,6 +95,7 @@ class AppDatabase {
           await _createV1(db);
           await _createV2(db);
           await _createV4(db);
+          await _createV5(db);
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
@@ -103,6 +104,7 @@ class AppDatabase {
           }
           if (oldVersion < 3) await _migrateLegacySession(db);
           if (oldVersion < 4) await _createV4(db);
+          if (oldVersion < 5) await _createV5(db);
         },
       ),
     );
@@ -193,6 +195,32 @@ class AppDatabase {
 
   Future<void> _createV4(Database db) =>
       db.execute('CREATE TABLE login_attempts (failed_at INTEGER NOT NULL)');
+
+  Future<void> _createV5(Database db) async {
+    await db.execute('''CREATE TABLE app_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      theme_mode TEXT NOT NULL DEFAULT 'system'
+        CHECK (theme_mode IN ('system', 'light', 'dark'))
+    )''');
+    await db.insert('app_settings', {'id': 1, 'theme_mode': 'system'});
+  }
+
+  /// Preferência da instalação, independente da conta e dos backups de carteira.
+  Future<String> getThemeMode() async {
+    final db = await database;
+    final rows = await db.query('app_settings',
+        columns: ['theme_mode'], where: 'id = ?', whereArgs: [1], limit: 1);
+    return rows.isEmpty ? 'system' : rows.first['theme_mode'] as String;
+  }
+
+  Future<void> setThemeMode(String mode) async {
+    if (!const {'system', 'light', 'dark'}.contains(mode)) {
+      throw ArgumentError.value(mode, 'mode', 'Tema inválido.');
+    }
+    final db = await database;
+    await db.insert('app_settings', {'id': 1, 'theme_mode': mode},
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
 
   /// Bancos criados na versão 1 só têm o estado consolidado em `positions`.
   /// Cada posição vira um ajuste inicial, preservando quantidade e PM.

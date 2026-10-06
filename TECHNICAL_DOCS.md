@@ -10,7 +10,7 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 | API externa | brapi.dev: `/api/quote/{ticker}` e `/api/quote/list` |
 | Gráficos | `fl_chart ^0.69.0` (linha no histórico, pizza na alocação) |
 
-> **Verificação em 05/10/2026:** `flutter analyze` limpo; 90 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
+> **Verificação em 05/10/2026:** `flutter analyze` limpo; 103 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
 
 ---
 
@@ -50,7 +50,7 @@ Não há mais ramificação por plataforma no `AppState`: o mesmo `AppDatabase` 
 
 ## 2. Banco de dados
 
-Arquivo `bolsa_facil.db` (nativo) ou IndexedDB do navegador (Web). `PRAGMA foreign_keys = ON`. **Versão 4** do schema, com migrações `onUpgrade` 1 → 2 → 3 → 4.
+Arquivo `bolsa_facil.db` (nativo) ou IndexedDB do navegador (Web). `PRAGMA foreign_keys = ON`. **Versão 5** do schema, com migrações `onUpgrade` 1 → 2 → 3 → 4 → 5.
 
 ```
 users 1──N positions      (PK user_id+symbol)  ← derivada de transactions
@@ -227,7 +227,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | Cotações exigem rede | Há cache de 5 min, mas só dos campos básicos (sem histórico/fundamentos) |
 | Plano gratuito da brapi | 1 ticker por requisição e cotas limitadas |
 | Detalhes e listas | Cotação dos detalhes atualiza a lista; respostas antigas do mesmo ticker e de sessões encerradas são ignoradas |
-| Sem tema escuro, alertas de preço ou ordenação | Não implementados |
+| Alertas de preço e ordenação | Ainda pendentes; tema disponível em Sistema/Claro/Escuro |
 | Estados e sessão | Respostas assíncronas só publicam na sessão que as iniciou; as telas observam estados específicos |
 | Proxy | Limite por IP em memória (some ao reiniciar); atrás de proxy reverso o IP observado é o do proxy |
 | Web: arquivos Wasm | `web/sqlite3.wasm` e `web/sqflite_sw.js` devem casar com a versão do pacote (`dart run sqflite_common_ffi_web:setup`) |
@@ -247,7 +247,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | `test/app_state_test.dart` | Fluxos de registro, sessão, favoritos, compra/venda, backup |
 | `test/widget_test.dart` | `AuthScreen` |
 
-Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 90 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
+Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 103 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
 
 ## 9. Verificações reproduzíveis por plataforma
 
@@ -277,3 +277,11 @@ O proxy em 8080 colidiu com outro serviço local. `run_web.ps1` usa 8081 por pad
 `test/detail_quote_state_test.dart` cobre substituição/inserção de cotações, falha preservando dados, períodos fora de ordem, logout e descarte.
 
 `test/state_boundaries_test.dart` cobre notificações por domínio, respostas antigas de refresh/busca/operações/backup, carregamento atômico dos dados e descarte. Cadastro/login/logout são enfileirados para que uma operação atrasada não recrie uma sessão depois do logout. A Home só é liberada após reidratar os dados do usuário.
+
+### Tema — schema v5
+
+`app_settings(id=1, theme_mode)` guarda `system`, `light` ou `dark` para a instalação; o padrão acompanha o sistema. A migração v4→v5 adiciona somente essa tabela. A preferência permanece ao sair da conta e não faz parte do backup de carteira. `SettingsState` persiste antes de publicar, impede gravações concorrentes e apresenta erros em português. A Conta oferece o seletor de aparência; cores de texto, cartões, campos e gráficos seguem o `ColorScheme`. A inicialização carrega a preferência antes de mostrar o app.
+
+`test/theme_settings_test.dart` cobre opções persistidas, migração e preservação dos dados, concorrência, falhas e descarte. `test/dark_theme_ui_test.dart` verifica a UI. `ThemeMode.system` acompanha o sistema conforme [MaterialApp.themeMode](https://api.flutter.dev/flutter/material/MaterialApp/themeMode.html).
+
+Tema Web: build release passou; escolha Escuro aplicada, cores inspecionadas e preferência/sessão preservadas após F5.

@@ -3,29 +3,32 @@ import 'package:flutter/services.dart';
 
 import '../database/app_database.dart';
 import '../state/app_state.dart';
-import '../theme.dart';
+import '../state/settings_state.dart';
 
 class AccountScreen extends StatelessWidget {
-  const AccountScreen({super.key, required this.state});
+  const AccountScreen({super.key, required this.state, this.settings});
   final AppState state;
+  final SettingsState? settings;
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-        animation: state.authState,
+        animation: Listenable.merge([state.authState, settings]),
         builder: (context, _) => _buildAccount(context),
       );
 
   Widget _buildAccount(BuildContext context) {
     final user = state.currentUser;
     if (user == null) return const SizedBox.shrink();
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Minha conta',
+          Text('Minha conta',
               style: TextStyle(
-                  color: ink, fontSize: 26, fontWeight: FontWeight.w900)),
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900)),
           const SizedBox(height: 24),
           Card(
             child: Padding(
@@ -34,11 +37,12 @@ class AccountScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundColor: const Color(0xFFF0EFFF),
+                    backgroundColor:
+                        Theme.of(context).colorScheme.primaryContainer,
                     child: Text(
                       user.name.substring(0, 1).toUpperCase(),
-                      style: const TextStyle(
-                          color: primary,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
                           fontSize: 24,
                           fontWeight: FontWeight.w900),
                     ),
@@ -49,13 +53,16 @@ class AccountScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(user.name,
-                            style: const TextStyle(
-                                color: ink,
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800)),
                         const SizedBox(height: 4),
                         Text(user.email,
-                            style: const TextStyle(color: Colors.blueGrey)),
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant)),
                       ],
                     ),
                   ),
@@ -63,6 +70,10 @@ class AccountScreen extends StatelessWidget {
               ),
             ),
           ),
+          if (settings != null) ...[
+            const SizedBox(height: 16),
+            _ThemeSelector(settings: settings!),
+          ],
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -94,9 +105,11 @@ class AccountScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Seus favoritos e investimentos ficam armazenados neste dispositivo (no navegador, na Web), separados por conta. Use o backup para levá-los a outro lugar.',
-            style: TextStyle(color: Colors.blueGrey, height: 1.5),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5),
           ),
         ],
       ),
@@ -134,6 +147,58 @@ class AccountScreen extends StatelessWidget {
           .showSnackBar(SnackBar(content: Text('Falha ao importar: $error')));
     }
   }
+}
+
+class _ThemeSelector extends StatelessWidget {
+  const _ThemeSelector({required this.settings});
+  final SettingsState settings;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Aparência', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            InputDecorator(
+              decoration:
+                  const InputDecoration(labelText: 'Tema do aplicativo'),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<ThemeMode>(
+                  value: settings.themeMode,
+                  isExpanded: true,
+                  onChanged: settings.saving
+                      ? null
+                      : (value) async {
+                          if (value != null) await settings.setThemeMode(value);
+                        },
+                  items: const [
+                    DropdownMenuItem(
+                        value: ThemeMode.system, child: Text('Sistema')),
+                    DropdownMenuItem(
+                        value: ThemeMode.light, child: Text('Claro')),
+                    DropdownMenuItem(
+                        value: ThemeMode.dark, child: Text('Escuro')),
+                  ],
+                ),
+              ),
+            ),
+            if (settings.saving) ...[
+              const SizedBox(height: 8),
+              const LinearProgressIndicator(semanticsLabel: 'Salvando tema'),
+            ],
+            if (settings.error != null) ...[
+              const SizedBox(height: 8),
+              Semantics(
+                  liveRegion: true,
+                  child: Text(settings.error!,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.error))),
+            ],
+          ]),
+        ),
+      );
 }
 
 class _ImportDialog extends StatefulWidget {

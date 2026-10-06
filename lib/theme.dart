@@ -1,30 +1,40 @@
 import 'package:flutter/material.dart';
 
 const primary = Color(0xFF6558F5);
-const positive = Color(0xFF14B86E);
-const negative = Color(0xFFFF5263);
-const ink = Color(0xFF172039);
 
-ThemeData buildTheme() {
+/// Cores financeiras com contraste nos dois temas, além dos sinais +/−.
+Color positiveColor(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF71D99B)
+        : const Color(0xFF137C43);
+Color negativeColor(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFFFB4AB)
+        : const Color(0xFFB3261E);
+
+ThemeData buildTheme({Brightness brightness = Brightness.light}) {
+  final dark = brightness == Brightness.dark;
   final scheme = ColorScheme.fromSeed(
     seedColor: primary,
-    brightness: Brightness.light,
-    surface: const Color(0xFFEFF1F7),
+    brightness: brightness,
+    surface: dark ? const Color(0xFF141318) : const Color(0xFFEFF1F7),
   );
   return ThemeData(
     useMaterial3: true,
+    brightness: brightness,
     colorScheme: scheme,
-    scaffoldBackgroundColor: const Color(0xFFEFF1F7),
+    scaffoldBackgroundColor: scheme.surface,
     fontFamily: 'sans-serif',
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
-      foregroundColor: ink,
+      foregroundColor: scheme.onSurface,
       elevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: ink),
+      titleTextStyle: TextStyle(
+          fontSize: 22, fontWeight: FontWeight.w800, color: scheme.onSurface),
     ),
     cardTheme: CardThemeData(
-      color: Colors.white,
+      color: dark ? scheme.surfaceContainer : Colors.white,
       elevation: 3,
       shadowColor: Colors.black.withValues(alpha: 0.15),
       margin: EdgeInsets.zero,
@@ -32,9 +42,11 @@ ThemeData buildTheme() {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      fillColor: dark ? scheme.surfaceContainerHighest : Colors.white,
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
     ),
   );
 }
