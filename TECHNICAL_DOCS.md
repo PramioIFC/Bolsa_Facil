@@ -10,7 +10,7 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 | API externa | brapi.dev: `/api/quote/{ticker}` e `/api/quote/list` |
 | Gráficos | `fl_chart ^0.69.0` (linha no histórico, pizza na alocação) |
 
-> **Verificação em 05/10/2026:** `flutter analyze` limpo; 62 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
+> **Verificação em 05/10/2026:** `flutter analyze` limpo; 70 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
 
 ---
 
@@ -50,7 +50,7 @@ Não há mais ramificação por plataforma no `AppState`: o mesmo `AppDatabase` 
 
 ## 2. Banco de dados
 
-Arquivo `bolsa_facil.db` (nativo) ou IndexedDB do navegador (Web). `PRAGMA foreign_keys = ON`. **Versão 3** do schema, com migrações `onUpgrade` 1 → 2 → 3.
+Arquivo `bolsa_facil.db` (nativo) ou IndexedDB do navegador (Web). `PRAGMA foreign_keys = ON`. **Versão 4** do schema, com migrações `onUpgrade` 1 → 2 → 3 → 4.
 
 ```
 users 1──N positions      (PK user_id+symbol)  ← derivada de transactions
@@ -112,8 +112,8 @@ O banco da versão original usava `session(slot)`. A v3 converte essa tabela par
 Autenticação **local**, sem servidor, OAuth ou JWT.
 
 - **Registro** (`AppDatabase.register`): valida nome (≥ 2), e-mail e senha (≥ 6). E-mail já cadastrado → `AuthException('Este e-mail já está cadastrado.')`; a conta existente **não** é alterada.
-- **Hash**: PBKDF2-HMAC-SHA256, salt aleatório de 24 bytes, 60.000 iterações (nativo) ou 20.000 (Web, onde o cálculo em JavaScript é bem mais lento). O cálculo cede o controle à UI a cada 1000 iterações, para a tela não congelar. Se o número de iterações salvo difere do da plataforma, o hash é regravado no próximo login. Formato: `pbkdf2_sha256$<iterações>$<hex>`. Hashes legados (`SHA-256("$salt:$senha")`) são aceitos e regravados no formato novo no primeiro login bem-sucedido. Comparação em tempo constante.
-- **Login**: mesma mensagem para e-mail inexistente e senha errada; no caso do e-mail inexistente ainda se calcula um hash para equalizar o tempo.
+- **Hash**: PBKDF2-HMAC-SHA256, salt aleatório de 24 bytes, 60.000 iterações no nativo e 20.000 na Web. O nativo usa `compute` em um isolate; a Web usa Web Crypto assíncrono, exigindo HTTPS ou localhost. Formato: `pbkdf2_sha256$<iterações>$<hex>`. Hashes legados são migrados no login; hashes com mais iterações nunca são reduzidos. Comparação em tempo constante.
+- **Login**: mesma mensagem para conta inexistente ou senha errada; ambas consomem derivação. O schema v4 registra falhas em `login_attempts(failed_at)`: após cinco falhas nos últimos 60 segundos, novas tentativas aguardam a expiração da mais antiga. O limite é global na instalação, persiste ao reabrir e serializa tentativas concorrentes em transação. Um sucesso não apaga falhas recentes.
 - **Sessão**: `sessions(id=1)`. `AppState.initialize()` chama `getSession()` e reidrata o usuário. `logout()` apaga a linha e zera o estado.
 
 ```
@@ -222,8 +222,8 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | **Sem sincronização em nuvem** | App offline-first para dados do usuário; a rede é usada só para cotações |
 | **Dados presos ao armazenamento local** | Nativo: ao arquivo do app (desinstalar apaga). Web: ao IndexedDB **da origem** (domínio + porta) e do perfil do navegador; limpar dados do site ou trocar de porta/perfil perde tudo. Mitigação: exportar/importar backup |
 | Autenticação é local | Protege contas entre usuários do mesmo aparelho/navegador, não é segurança de servidor; quem acessa o arquivo do banco acessa os dados |
-| PBKDF2 em Dart puro | 60.000 (nativo) / 20.000 (Web) iterações, com cessão à UI a cada 1000. Aumentar ou migrar para implementação nativa (Argon2id) |
-| Sem rate limit de login | Tentativas ilimitadas no aparelho |
+| Custo do hash | 60.000 (nativo) / 20.000 (Web) iterações, fora da thread da UI; autenticação continua local |
+| Limite local de login | Cinco falhas por 60 segundos; acesso direto ao banco pode contornar o limite e retrocesso do relógio pode prolongá-lo |
 | Cotações exigem rede | Há cache de 5 min, mas só dos campos básicos (sem histórico/fundamentos) |
 | Plano gratuito da brapi | 1 ticker por requisição e cotas limitadas |
 | Tela de detalhes | Troca de período não atualiza `AppState.stocks` |
@@ -247,7 +247,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | `test/app_state_test.dart` | Fluxos de registro, sessão, favoritos, compra/venda, backup |
 | `test/widget_test.dart` | `AuthScreen` |
 
-Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 62 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
+Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 70 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
 
 ## 9. Verificações reproduzíveis por plataforma
 
@@ -269,3 +269,7 @@ Remove-Item Env:LEGACY_DATABASE_PATH
 `platform_smoke.dart` cria um banco exclusivo, testa cadastro/login, reabertura de sessão/favorito/carteira, compra/venda, resultado realizado e exportação/importação; remove apenas o banco de teste e emite `BOLSA_PLATFORM_SMOKE: PASS` ou `FAIL`. Nunca usa o banco principal.
 
 O proxy em 8080 colidiu com outro serviço local. `run_web.ps1` usa 8081 por padrão e aceita `-ProxyPort`, passando a mesma URL ao Flutter. Espera `/health` ficar pronto e encerra apenas seu próprio processo e filhos. Os testes curl em 8081 retornaram: health 200, PETR4 200, autocomplete 200, rota inválida 404, POST 405, origem proibida 403. A API real confirmou `stocks[].stock/name/logo` em `/api/quote/list`; `/api/v2/tickers` respondeu com `results[]` e `pagination`. Mantido o endpoint existente, cujo contrato funciona.
+
+### Segurança do login — schema v4
+
+`test/login_security_test.dart` cobre vetores conhecidos de PBKDF2, concorrência, expiração, persistência ao reabrir, migração v3→v4 e hashes mais fortes. Login de uma conta Web existente foi verificado no navegador com Web Crypto. Referências: [Flutter compute](https://api.flutter.dev/flutter/foundation/compute.html) e [Web Cryptography](https://www.w3.org/TR/WebCryptoAPI/#pbkdf2-operations).

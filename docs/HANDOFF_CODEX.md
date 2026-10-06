@@ -14,7 +14,7 @@ Leia, nesta ordem: `TECHNICAL_DOCS.md` (arquitetura atual), `MELHORIAS.md` (o qu
 |---|---|
 | `flutter pub get` e setup SQLite Web | passaram (`sqflite_common_ffi_web 1.2.0`) |
 | `flutter analyze` | No issues found |
-| `flutter test` | 62 testes passaram |
+| `flutter test` | 70 testes passaram |
 | Build Web release (base 8080 e 8081) | passou |
 | Web em uso real | cadastro, favorito, compra/venda/histórico, F5 com sessão/carteira e cache sem proxy passaram |
 | Autocomplete na API real | `stocks[].stock/name/logo` confirmado; `/v2/tickers` também respondeu, mas o endpoint atual foi mantido |
@@ -44,7 +44,7 @@ Comandos do smoke e da migração real estão em `TECHNICAL_DOCS.md`. Próxima e
 3. Alertas de preço-alvo (notificações locais).
 4. Ordenação/filtro nas listas.
 5. Telas com outros dados da brapi (dividendos, câmbio, inflação).
-6. PBKDF2 em Dart puro (60.000 nativo / 20.000 Web, cedendo à UI a cada 1000): avaliar isolate (nativo) ou Argon2id; limitar tentativas de login.
+6. **Concluída:** PBKDF2 em isolate nativo / Web Crypto; schema v4 limita cinco falhas de login por 60 segundos. Migração e concorrência cobertas por testes; conta Web existente compatível.
 7. Tela de detalhes: trocar o período do gráfico não atualiza `AppState.stocks`.
 8. Testes de widget das telas novas.
 

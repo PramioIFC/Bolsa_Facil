@@ -1,3 +1,9 @@
+# Segurança do login — 05/10/2026
+
+- PBKDF2 em isolate nativo e Web Crypto; compatibilidade com hashes existentes e sem reduzir hashes mais fortes.
+- Schema v4: limite persistente de cinco falhas de login por 60 segundos, com serialização de tentativas concorrentes.
+- Oito testes acrescentados (70 no total); login Web com conta existente e build Web passaram.
+
 # Verificações e correções locais — 05/10/2026
 
 - V2 incorporada preservando `.git`, `.env` e wireframes preparados anteriormente.

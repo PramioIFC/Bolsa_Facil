@@ -10,6 +10,7 @@ import '../models/portfolio_item.dart';
 import '../models/stock.dart';
 import '../models/trade.dart';
 import '../models/user_account.dart';
+import '../security/password_derivation.dart';
 
 /// Erro de autenticação/cadastro com mensagem pronta para exibir ao usuário.
 class AuthException implements Exception {
@@ -40,19 +41,19 @@ class AppDatabase {
     DatabaseFactory? factory,
     String databaseName = 'bolsa_facil.db',
     int? pbkdf2Iterations,
+    DateTime Function()? clock,
   })  : _factory = factory,
         _databaseName = databaseName,
-        _iterations = pbkdf2Iterations ?? defaultPbkdf2Iterations;
+        _iterations = pbkdf2Iterations ?? defaultPbkdf2Iterations,
+        _clock = clock ?? DateTime.now;
 
   /// Instância usada pelo aplicativo.
   static final AppDatabase instance = AppDatabase();
 
-  static const schemaVersion = 3;
+  static const schemaVersion = 4;
 
-  /// Iterações do PBKDF2-HMAC-SHA256. Valor de compromisso: o cálculo roda em
-  /// Dart puro. Na Web (JavaScript) é bem mais lento, então usa-se menos. O
-  /// cálculo cede o controle à UI a cada 1000 iterações para não congelar a
-  /// tela. Para endurecer, aumente o valor ou migre para Argon2id.
+  /// Mantém o custo configurado nas contas existentes. O cálculo usa isolate
+  /// nativo ou Web Crypto na Web, sem executar o laço na thread da interface.
   static int get defaultPbkdf2Iterations => kIsWeb ? 20000 : 60000;
 
   static const _hashPrefix = 'pbkdf2_sha256';
@@ -61,6 +62,9 @@ class AppDatabase {
   final DatabaseFactory? _factory;
   final String _databaseName;
   final int _iterations;
+  final DateTime Function() _clock;
+  static const _loginWindowMs = 60000;
+  static const _maxLoginFailures = 5;
   Future<Database>? _opening;
 
   Future<Database> get database => _opening ??= _open();
@@ -90,6 +94,7 @@ class AppDatabase {
         onCreate: (db, version) async {
           await _createV1(db);
           await _createV2(db);
+          await _createV4(db);
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
@@ -97,6 +102,7 @@ class AppDatabase {
             await _seedTransactionsFromPositions(db);
           }
           if (oldVersion < 3) await _migrateLegacySession(db);
+          if (oldVersion < 4) await _createV4(db);
         },
       ),
     );
@@ -185,6 +191,9 @@ class AppDatabase {
     ''');
   }
 
+  Future<void> _createV4(Database db) =>
+      db.execute('CREATE TABLE login_attempts (failed_at INTEGER NOT NULL)');
+
   /// Bancos criados na versão 1 só têm o estado consolidado em `positions`.
   /// Cada posição vira um ajuste inicial, preservando quantidade e PM.
   Future<void> _seedTransactionsFromPositions(Database db) async {
@@ -206,29 +215,13 @@ class AppDatabase {
     return base64UrlEncode(List.generate(24, (_) => random.nextInt(256)));
   }
 
-  Future<List<int>> _pbkdf2(
-      List<int> password, List<int> salt, int iterations) async {
-    final hmac = Hmac(sha256, password);
-    var block = hmac.convert([...salt, 0, 0, 0, 1]).bytes;
-    final result = List<int>.from(block);
-    for (var i = 1; i < iterations; i++) {
-      block = hmac.convert(block).bytes;
-      for (var j = 0; j < result.length; j++) {
-        result[j] ^= block[j];
-      }
-      // Devolve o controle ao loop de eventos para a UI continuar animando.
-      if (i % 1000 == 0) await Future<void>.delayed(Duration.zero);
-    }
-    return result;
-  }
-
   String _hex(List<int> bytes) =>
       bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 
   /// Formato armazenado: `pbkdf2_sha256$<iterações>$<hash em hex>`.
   Future<String> _hashPassword(String password, String salt) async {
-    final key =
-        await _pbkdf2(utf8.encode(password), utf8.encode(salt), _iterations);
+    final key = await derivePasswordKey(
+        utf8.encode(password), utf8.encode(salt), _iterations);
     return '$_hashPrefix\$$_iterations\$${_hex(key)}';
   }
 
@@ -255,11 +248,12 @@ class AppDatabase {
         return (ok: false, needsUpgrade: false);
       }
       final candidate = _hex(
-        await _pbkdf2(utf8.encode(password), utf8.encode(salt), iterations),
+        await derivePasswordKey(
+            utf8.encode(password), utf8.encode(salt), iterations),
       );
       return (
         ok: _constantTimeEquals(candidate, parts[2]),
-        needsUpgrade: iterations != _iterations,
+        needsUpgrade: iterations < _iterations,
       );
     }
     final legacy = sha256.convert(utf8.encode('$salt:$password')).toString();
@@ -316,46 +310,71 @@ class AppDatabase {
     }
   }
 
+  /// O limite é global nesta instalação e persiste ao fechar o aplicativo.
+  /// A transação serializa tentativas concorrentes, inclusive em outra instância.
   Future<UserAccount> login(String email, String password) async {
-    const invalid = AuthException('E-mail ou senha incorretos.');
     final db = await database;
-    final rows = await db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: [email.trim().toLowerCase()],
-      limit: 1,
-    );
-    if (rows.isEmpty) {
-      // Gasta o mesmo tempo de uma verificação real (evita revelar, pelo
-      // tempo de resposta, se o e-mail existe).
-      await _hashPassword(password, 'usuario-inexistente');
-      throw invalid;
-    }
-    final row = rows.first;
-    final check = await _verifyPassword(
-      password,
-      row['password_salt'] as String,
-      row['password_hash'] as String,
-    );
-    if (!check.ok) throw invalid;
-
-    if (check.needsUpgrade) {
-      await db.update(
-        'users',
-        {
-          'password_hash':
-              await _hashPassword(password, row['password_salt'] as String)
-        },
-        where: 'id = ?',
-        whereArgs: [row['id']],
-      );
-    }
-    final user = UserAccount.fromMap(row);
-    await _saveSession(db, user.id);
-    return user;
+    final result =
+        await db.transaction<({UserAccount? user, String? error})>((txn) async {
+      final now = _clock().millisecondsSinceEpoch;
+      await txn.delete('login_attempts',
+          where: 'failed_at <= ?', whereArgs: [now - _loginWindowMs]);
+      final failures =
+          await txn.query('login_attempts', orderBy: 'failed_at ASC');
+      if (failures.length >= _maxLoginFailures) {
+        final waitMs =
+            (failures.first['failed_at'] as int) + _loginWindowMs - now;
+        final seconds = (waitMs / 1000).ceil();
+        return (
+          user: null,
+          error:
+              'Muitas tentativas de login. Aguarde $seconds ${seconds == 1 ? 'segundo' : 'segundos'} e tente novamente.'
+        );
+      }
+      final rows = await txn.query('users',
+          where: 'email = ?',
+          whereArgs: [email.trim().toLowerCase()],
+          limit: 1);
+      var valid = false;
+      var needsUpgrade = false;
+      if (rows.isEmpty) {
+        // Também consome o custo de derivação para e-mails inexistentes.
+        await _hashPassword(password, 'usuario-inexistente');
+      } else {
+        final check = await _verifyPassword(
+            password,
+            rows.first['password_salt'] as String,
+            rows.first['password_hash'] as String);
+        valid = check.ok;
+        needsUpgrade = check.needsUpgrade;
+      }
+      if (!valid) {
+        await txn.insert(
+            'login_attempts', {'failed_at': _clock().millisecondsSinceEpoch});
+        return (user: null, error: 'E-mail ou senha incorretos.');
+      }
+      final row = rows.first;
+      if (needsUpgrade) {
+        await txn.update(
+            'users',
+            {
+              'password_hash':
+                  await _hashPassword(password, row['password_salt'] as String)
+            },
+            where: 'id = ?',
+            whereArgs: [row['id']]);
+      }
+      final user = UserAccount.fromMap(row);
+      await _saveSession(txn, user.id);
+      // Um sucesso não apaga as falhas recentes nem reinicia o limite.
+      return (user: user, error: null);
+    });
+    // Lançar somente depois do commit: a falha precisa ficar persistida.
+    if (result.error != null) throw AuthException(result.error!);
+    return result.user!;
   }
 
-  Future<void> _saveSession(Database db, int userId) => db.insert(
+  Future<void> _saveSession(DatabaseExecutor db, int userId) => db.insert(
         'sessions',
         {'id': 1, 'user_id': userId},
         conflictAlgorithm: ConflictAlgorithm.replace,
