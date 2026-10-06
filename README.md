@@ -61,7 +61,7 @@ O projeto segue uma arquitetura **cliente-servidor local**. A persistência de d
 
 ### 1. Clonar e Instalar
 ```bash
-git clone https://github.com/PramioIFC/BolsaFacil.git
+git clone https://github.com/PramioIFC/Bolsa_Facil.git
 cd BolsaFacil
 flutter pub get
 ```
@@ -111,7 +111,7 @@ dart run sqflite_common_ffi_web:setup
 ```
 
 ## ✅ Testes e Análise
-O projeto possui CI configurado no GitHub Actions. Para rodar as validações localmente:
+O projeto possui CI configu no radoGitHub Actions. Para rodar as validações localmente:
 ```bash
 flutter analyze
 flutter test
