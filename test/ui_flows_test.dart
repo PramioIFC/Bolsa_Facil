@@ -143,19 +143,22 @@ void main() {
             .value,
         500);
 
+    await tester.ensureVisible(find.byType(PopupMenuButton<String>).first);
     await tester.tap(find.byType(PopupMenuButton<String>).first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Vender'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), '11');
+    final sellFields = find.descendant(
+        of: find.byType(AlertDialog), matching: find.byType(TextField));
+    await tester.enterText(sellFields.at(0), '11');
     await tester.tap(find.widgetWithText(FilledButton, 'Vender'));
     await tester.pump();
     expect(find.text('Você só possui 10.0.'), findsOneWidget);
     expect(state.portfolio.single.quantity, 10);
 
-    await tester.enterText(find.byType(TextField).at(0), '4');
-    await tester.enterText(find.byType(TextField).at(1), '35,00');
-    await tester.enterText(find.byType(TextField).at(2), '2,00');
+    await tester.enterText(sellFields.at(0), '4');
+    await tester.enterText(sellFields.at(1), '35,00');
+    await tester.enterText(sellFields.at(2), '2,00');
 
     await tester.tap(find.widgetWithText(FilledButton, 'Vender'));
     await tester.pump();
@@ -165,6 +168,7 @@ void main() {
     expect(state.portfolio.single.quantity, 6);
     expect(state.realizedProfit, 58);
 
+    await tester.ensureVisible(find.byType(PopupMenuButton<String>).first);
     await tester.tap(find.byType(PopupMenuButton<String>).first);
     await tester.pumpAndSettle();
 

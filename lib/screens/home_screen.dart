@@ -6,6 +6,8 @@ import '../models/stock.dart';
 import '../state/app_state.dart';
 
 import '../utils/format.dart';
+import '../utils/list_order.dart';
+import '../widgets/list_order_controls.dart';
 import '../widgets/stock_tile.dart';
 import 'stock_details_screen.dart';
 
@@ -20,6 +22,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final controller = TextEditingController();
   bool searching = false;
+  StockOrder order = StockOrder.code;
+  String filter = '';
   Timer? _debounce;
   List<TickerSuggestion> suggestions = const [];
 
@@ -78,99 +82,131 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: widget.state.marketAndPortfolio,
-        builder: (context, _) => RefreshIndicator(
-          onRefresh: widget.state.refresh,
-          child: CustomScrollView(slivers: [
-            const SliverPadding(
-              padding: EdgeInsets.fromLTRB(20, 28, 20, 6),
-              sliver: SliverToBoxAdapter(child: _Header()),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-              sliver: SliverToBoxAdapter(
-                child: TextField(
-                  controller: controller,
-                  textCapitalization: TextCapitalization.characters,
-                  onChanged: _onChanged,
-                  onSubmitted: (_) => _search(),
-                  decoration: InputDecoration(
-                    hintText: 'Buscar ação, ex: PETR4',
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    suffixIcon: searching
-                        ? const Padding(
-                            padding: EdgeInsets.all(14),
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : IconButton(
-                            onPressed: _search,
-                            icon: const Icon(Icons.arrow_forward_rounded)),
+        builder: (context, _) {
+          final visible =
+              orderStocks(widget.state.stocks, order: order, query: filter);
+          return RefreshIndicator(
+            onRefresh: widget.state.refresh,
+            child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  const SliverPadding(
+                    padding: EdgeInsets.fromLTRB(20, 28, 20, 6),
+                    sliver: SliverToBoxAdapter(child: _Header()),
                   ),
-                ),
-              ),
-            ),
-            if (suggestions.isNotEmpty)
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-                sliver: SliverToBoxAdapter(
-                  child: _Suggestions(items: suggestions, onPick: _pick),
-                ),
-              ),
-            if (_statusMessage(widget.state) != null)
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                sliver: SliverToBoxAdapter(
-                  child: _StatusBanner(message: _statusMessage(widget.state)!),
-                ),
-              ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              sliver: SliverToBoxAdapter(
-                child: Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      Text('Ações em destaque',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Theme.of(context).colorScheme.onSurface)),
-                      Text(_updatedLabel(widget.state),
-                          style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                              fontSize: 12)),
-                    ]),
-              ),
-            ),
-            if (widget.state.loading && widget.state.stocks.isEmpty)
-              const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()))
-            else if (widget.state.error != null && widget.state.stocks.isEmpty)
-              SliverFillRemaining(
-                  child: _ErrorState(
-                      message: widget.state.error!,
-                      retry: widget.state.refresh))
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
-                sliver: SliverList.separated(
-                  itemCount: widget.state.stocks.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (_, i) {
-                    final stock = widget.state.stocks[i];
-                    return StockTile(
-                        stock: stock,
-                        isFavorite:
-                            widget.state.favorites.contains(stock.symbol),
-                        onTap: () => _open(stock),
-                        onFavorite: () =>
-                            widget.state.toggleFavorite(stock.symbol));
-                  },
-                ),
-              ),
-          ]),
-        ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+                    sliver: SliverToBoxAdapter(
+                      child: TextField(
+                        controller: controller,
+                        textCapitalization: TextCapitalization.characters,
+                        onChanged: _onChanged,
+                        onSubmitted: (_) => _search(),
+                        decoration: InputDecoration(
+                          hintText: 'Buscar ação, ex: PETR4',
+                          prefixIcon: const Icon(Icons.search_rounded),
+                          suffixIcon: searching
+                              ? const Padding(
+                                  padding: EdgeInsets.all(14),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2))
+                              : IconButton(
+                                  onPressed: _search,
+                                  icon:
+                                      const Icon(Icons.arrow_forward_rounded)),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (suggestions.isNotEmpty)
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+                      sliver: SliverToBoxAdapter(
+                        child: _Suggestions(items: suggestions, onPick: _pick),
+                      ),
+                    ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+                    sliver: SliverToBoxAdapter(
+                        child: ListOrderControls<StockOrder>(
+                      order: order,
+                      orders: {
+                        for (final value in StockOrder.values)
+                          value: value.label
+                      },
+                      filterKey: const Key('home-list-filter'),
+                      onFilterChanged: (value) =>
+                          setState(() => filter = value),
+                      onOrderChanged: (value) => setState(() => order = value),
+                    )),
+                  ),
+                  if (_statusMessage(widget.state) != null)
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      sliver: SliverToBoxAdapter(
+                        child: _StatusBanner(
+                            message: _statusMessage(widget.state)!),
+                      ),
+                    ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    sliver: SliverToBoxAdapter(
+                      child: Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            Text('Ações em destaque',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface)),
+                            Text(_updatedLabel(widget.state),
+                                style: TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    fontSize: 12)),
+                          ]),
+                    ),
+                  ),
+                  if (widget.state.loading && widget.state.stocks.isEmpty)
+                    const SliverFillRemaining(
+                        child: Center(child: CircularProgressIndicator()))
+                  else if (widget.state.error != null &&
+                      widget.state.stocks.isEmpty)
+                    SliverFillRemaining(
+                        child: _ErrorState(
+                            message: widget.state.error!,
+                            retry: widget.state.refresh))
+                  else if (visible.isEmpty && filter.trim().isNotEmpty)
+                    const SliverToBoxAdapter(
+                        child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Text('Nenhuma ação corresponde ao filtro.')))
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+                      sliver: SliverList.separated(
+                        itemCount: visible.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (_, i) {
+                          final stock = visible[i];
+                          return StockTile(
+                              stock: stock,
+                              isFavorite:
+                                  widget.state.favorites.contains(stock.symbol),
+                              onTap: () => _open(stock),
+                              onFavorite: () =>
+                                  widget.state.toggleFavorite(stock.symbol));
+                        },
+                      ),
+                    ),
+                ]),
+          );
+        },
       );
 }
 

@@ -1,21 +1,37 @@
 import 'package:flutter/material.dart';
 
 import '../state/app_state.dart';
-
+import '../utils/list_order.dart';
+import '../widgets/list_order_controls.dart';
 import '../widgets/stock_tile.dart';
 import 'stock_details_screen.dart';
 
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key, required this.state});
   final AppState state;
+
+  @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  AppState get state => widget.state;
+  StockOrder order = StockOrder.code;
+  String filter = '';
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: state.marketAndPortfolio,
         builder: (context, _) {
-          final favorites = state.stocks
-              .where((s) => state.favorites.contains(s.symbol))
-              .toList();
+          final quotes = state.stocks
+              .where((stock) => state.favorites.contains(stock.symbol));
+          final visible = orderStocks(quotes, order: order, query: filter);
+          final missing = state.favorites
+              .where((symbol) =>
+                  state.stockFor(symbol) == null &&
+                  matchesListFilter(symbol, '', filter))
+              .toList()
+            ..sort();
           return Padding(
             padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
             child:
@@ -29,33 +45,63 @@ class FavoritesScreen extends StatelessWidget {
               Text('Acompanhe de perto as ações que importam.',
                   style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              const SizedBox(height: 22),
+              const SizedBox(height: 18),
+              if (state.favorites.isNotEmpty) ...[
+                ListOrderControls<StockOrder>(
+                  order: order,
+                  orders: {
+                    for (final value in StockOrder.values) value: value.label
+                  },
+                  filterKey: const Key('favorites-list-filter'),
+                  onFilterChanged: (value) => setState(() => filter = value),
+                  onOrderChanged: (value) => setState(() => order = value),
+                ),
+                const SizedBox(height: 14),
+              ],
               Expanded(
-                child: favorites.isEmpty
-                    ? const _EmptyFavorites()
-                    : RefreshIndicator(
-                        onRefresh: state.refresh,
-                        child: ListView.separated(
-                          itemCount: favorites.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (_, index) {
-                            final stock = favorites[index];
-                            return StockTile(
-                              stock: stock,
-                              isFavorite: true,
-                              onFavorite: () =>
-                                  state.toggleFavorite(stock.symbol),
-                              onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => StockDetailsScreen(
-                                          state: state, initialStock: stock))),
-                            );
-                          },
-                        ),
-                      ),
-              ),
+                  child: state.favorites.isEmpty
+                      ? const _EmptyFavorites()
+                      : RefreshIndicator(
+                          onRefresh: state.refresh,
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              if (visible.isEmpty && missing.isEmpty)
+                                const Padding(
+                                    padding: EdgeInsets.all(24),
+                                    child: Text(
+                                        'Nenhuma favorita corresponde ao filtro.')),
+                              if (missing.isNotEmpty) ...[
+                                Text(visible.isEmpty
+                                    ? 'Seus favoritos estão salvos, mas ainda não há cotações disponíveis.'
+                                    : 'Alguns favoritos ainda não têm cotação.'),
+                                const SizedBox(height: 6),
+                                Text('Sem cotação: ${missing.join(', ')}.'),
+                                TextButton.icon(
+                                    onPressed: state.loading
+                                        ? null
+                                        : () => state.refresh(),
+                                    icon: const Icon(Icons.refresh),
+                                    label: const Text('Tentar novamente')),
+                                const SizedBox(height: 10),
+                              ],
+                              for (final stock in visible) ...[
+                                StockTile(
+                                    stock: stock,
+                                    isFavorite: true,
+                                    onFavorite: () =>
+                                        state.toggleFavorite(stock.symbol),
+                                    onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (_) => StockDetailsScreen(
+                                                state: state,
+                                                initialStock: stock)))),
+                                const SizedBox(height: 10),
+                              ],
+                            ],
+                          ),
+                        )),
             ]),
           );
         },

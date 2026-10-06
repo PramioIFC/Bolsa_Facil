@@ -10,7 +10,7 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 | API externa | brapi.dev: `/api/quote/{ticker}` e `/api/quote/list` |
 | Gráficos | `fl_chart ^0.69.0` (linha no histórico, pizza na alocação) |
 
-> **Verificação em 05/10/2026:** `flutter analyze` limpo; 103 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
+> **Verificação em 05/10/2026:** `flutter analyze` limpo; 113 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
 
 ---
 
@@ -227,7 +227,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | Cotações exigem rede | Há cache de 5 min, mas só dos campos básicos (sem histórico/fundamentos) |
 | Plano gratuito da brapi | 1 ticker por requisição e cotas limitadas |
 | Detalhes e listas | Cotação dos detalhes atualiza a lista; respostas antigas do mesmo ticker e de sessões encerradas são ignoradas |
-| Alertas de preço e ordenação | Ainda pendentes; tema disponível em Sistema/Claro/Escuro |
+| Alertas de preço | Ainda pendentes; tema e ordenação/filtro disponíveis |
 | Estados e sessão | Respostas assíncronas só publicam na sessão que as iniciou; as telas observam estados específicos |
 | Proxy | Limite por IP em memória (some ao reiniciar); atrás de proxy reverso o IP observado é o do proxy |
 | Web: arquivos Wasm | `web/sqlite3.wasm` e `web/sqflite_sw.js` devem casar com a versão do pacote (`dart run sqflite_common_ffi_web:setup`) |
@@ -247,7 +247,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | `test/app_state_test.dart` | Fluxos de registro, sessão, favoritos, compra/venda, backup |
 | `test/widget_test.dart` | `AuthScreen` |
 
-Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 103 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
+Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 113 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
 
 ## 9. Verificações reproduzíveis por plataforma
 
@@ -285,3 +285,11 @@ O proxy em 8080 colidiu com outro serviço local. `run_web.ps1` usa 8081 por pad
 `test/theme_settings_test.dart` cobre opções persistidas, migração e preservação dos dados, concorrência, falhas e descarte. `test/dark_theme_ui_test.dart` verifica a UI. `ThemeMode.system` acompanha o sistema conforme [MaterialApp.themeMode](https://api.flutter.dev/flutter/material/MaterialApp/themeMode.html).
 
 Tema Web: build release passou; escolha Escuro aplicada, cores inspecionadas e preferência/sessão preservadas após F5.
+
+### Ordenação e filtro das listas
+
+As preferências de ordenação/filtro pertencem à tela e duram enquanto ela estiver aberta. `lib/utils/list_order.dart` trabalha em cópias e usa código como desempate; não modifica `AppState`. Home/Favoritas oferecem código, preço e variação; Carteira oferece código, valor da posição e resultado percentual. Sem cotação ou base válida para a métrica, posições vão ao final em ambas as direções. O filtro local procura código/nome. Totais e alocação usam toda a carteira. Estado sem correspondências é diferente de lista vazia; favoritos salvos sem cotação exibem indisponibilidade e atualização. A busca remota/autocomplete do Início continua independente.
+
+`test/list_order_test.dart` e `test/list_order_ui_test.dart` cobrem ordens, desempates, cópias, filtro, métricas indisponíveis, totais/alocação, viewport estreito e atualização com filtro sem resultados.
+
+Web release das listas passou. No navegador: ordem Maior preço colocou VALE3/PETR4/WEGE3 em sequência; filtro PETR deixou somente PETR4. Filtrar Carteira por VALE manteve totais e alocação PETR4, mostrando somente ausência de correspondências na lista.

@@ -14,7 +14,7 @@ Leia, nesta ordem: `TECHNICAL_DOCS.md` (arquitetura atual), `MELHORIAS.md` (o qu
 |---|---|
 | `flutter pub get` e setup SQLite Web | passaram (`sqflite_common_ffi_web 1.2.0`) |
 | `flutter analyze` | No issues found |
-| `flutter test` | 103 testes passaram |
+| `flutter test` | 113 testes passaram |
 | Build Web release (base 8080 e 8081) | passou |
 | Web em uso real | cadastro, favorito, compra/venda/histórico, F5 com sessão/carteira e cache sem proxy passaram |
 | Autocomplete na API real | `stocks[].stock/name/logo` confirmado; `/v2/tickers` também respondeu, mas o endpoint atual foi mantido |
@@ -35,14 +35,14 @@ A v2 anexada foi incorporada ao checkout com autorização do usuário, preserva
 
 **Limite da verificação:** o smoke nativo testa a implementação SQLite real e dados; não foi feita revisão visual completa das telas Android/Windows. Os fluxos de UI foram exercitados em widgets e no Web. O banco real disponível tinha uma conta e nenhuma posição; a preservação de posições é coberta pelo banco legado sintético.
 
-Comandos do smoke e da migração real estão em `TECHNICAL_DOCS.md`. Segurança, detalhes e divisão de estados concluídos. Próxima etapa: tema escuro, ordenação/filtro, alertas e dados adicionais, conforme ordem abaixo.
+Comandos do smoke e da migração real estão em `TECHNICAL_DOCS.md`. Segurança, detalhes, divisão de estados, tema e ordenação/filtro concluídos. Próxima etapa: alertas e dados adicionais, conforme ordem abaixo.
 
 ## Estado das pendências de produto
 
 1. **Concluída:** estados Auth/Market/Portfolio com facade compatível e injeção por construtor. Quatorze testes de limites e concorrência; sem dependência adicional.
 2. **Concluída:** temas Sistema/Claro/Escuro com preferência SQLite (schema v5), cores adaptadas e Conta rolável.
 3. Alertas de preço-alvo (notificações locais).
-4. Ordenação/filtro nas listas.
+4. **Concluída:** ordenação e filtro local em Início/Favoritas/Carteira, preservando totais/alocação.
 5. Telas com outros dados da brapi (dividendos, câmbio, inflação).
 6. **Concluída:** PBKDF2 em isolate nativo / Web Crypto; schema v4 limita cinco falhas de login por 60 segundos. Migração e concorrência cobertas por testes; conta Web existente compatível.
 7. **Concluída:** detalhes atualizam `AppState.stocks`; seis testes de concorrência, erros e ciclo de vida.

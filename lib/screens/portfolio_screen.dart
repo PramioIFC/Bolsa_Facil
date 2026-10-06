@@ -7,18 +7,31 @@ import '../models/trade.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../utils/format.dart';
+import '../utils/list_order.dart';
+import '../widgets/list_order_controls.dart';
 import '../widgets/stock_tile.dart';
 import 'stock_details_screen.dart';
 
-class PortfolioScreen extends StatelessWidget {
+class PortfolioScreen extends StatefulWidget {
   const PortfolioScreen({super.key, required this.state});
   final AppState state;
+
+  @override
+  State<PortfolioScreen> createState() => _PortfolioScreenState();
+}
+
+class _PortfolioScreenState extends State<PortfolioScreen> {
+  AppState get state => widget.state;
+  PortfolioOrder order = PortfolioOrder.code;
+  String filter = '';
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: state.marketAndPortfolio,
         builder: (context, _) {
           final items = state.portfolio;
+          final visible = orderPortfolio(items, state.stockFor,
+              order: order, query: filter);
           final invested = items.fold(0.0, (sum, item) => sum + item.invested);
           final current = items.fold(
               0.0, (sum, item) => sum + _priceOf(item) * item.quantity);
@@ -60,10 +73,25 @@ class PortfolioScreen extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                         color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 12),
+                ListOrderControls<PortfolioOrder>(
+                  order: order,
+                  orders: {
+                    for (final value in PortfolioOrder.values)
+                      value: value.label
+                  },
+                  filterKey: const Key('portfolio-list-filter'),
+                  onFilterChanged: (value) => setState(() => filter = value),
+                  onOrderChanged: (value) => setState(() => order = value),
+                ),
+                const SizedBox(height: 12),
                 if (items.isEmpty)
                   const _EmptyPortfolio()
+                else if (visible.isEmpty)
+                  const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('Nenhuma posição corresponde ao filtro.'))
                 else
-                  for (final item in items) ...[
+                  for (final item in visible) ...[
                     _PositionCard(
                       item: item,
                       price: _priceOf(item),

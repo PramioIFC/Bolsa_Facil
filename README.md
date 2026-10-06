@@ -6,7 +6,7 @@ Documentação: [`TECHNICAL_DOCS.md`](TECHNICAL_DOCS.md) · Mudanças desta vers
 
 ## Requisitos
 
-- Flutter estável recente (Dart `>=3.3.0 <4.0.0`)
+- Flutter compatível com o lock: >=3.44 e Dart >=3.12 (ambiente verificado: Flutter 3.47.5 / Dart 3.13.4)
 - Token gratuito da brapi: <https://brapi.dev/dashboard>
 
 ## Configuração do token
@@ -55,6 +55,14 @@ Só encaminha `GET /api/quote/{ticker}` para a brapi, injetando o token. Escuta 
 ## Backup
 
 Conta → **Exportar backup** copia um JSON (favoritos e operações, sem senha). **Importar backup** o restaura, substituindo os dados atuais.
+
+## Listas
+
+Início e Favoritas ordenam por código, preço ou variação. Carteira ordena por código, valor da posição ou resultado percentual. **Filtrar lista** encontra código/nome entre os itens já carregados. O filtro da carteira mantém os totais e a alocação completos. A busca de ações no Início continua separada.
+
+## Aparência
+
+Conta → **Aparência** oferece Sistema, Claro e Escuro. A escolha fica no SQLite deste dispositivo/navegador e permanece ao sair da conta.
 
 ## Ambiente verificado e validação
 

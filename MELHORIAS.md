@@ -1,3 +1,10 @@
+# Ordenação e filtros
+
+- Listas ordenadas por código, preço/variação ou valor/resultado da posição; desempate por código, sem mutar o estado global.
+- Filtro por código/nome; totais e alocação continuam usando a carteira inteira.
+- Sem resultados e favoritos com cotação indisponível têm mensagens próprias.
+- Dez testes acrescentados; analyze limpo e 113 testes passaram.
+
 # Tema claro, escuro e do sistema
 
 - Seletor de aparência na Conta; preferência global persiste entre sessões. Build Web e escolha Escuro após F5 verificados no navegador.
@@ -101,7 +108,7 @@ Legenda: ✅ implementado (não executado) · 🟡 parcial · ⬜ não feito.
 | Gráfico de alocação (pizza) e rentabilidade (% por ativo) | ✅ |
 | Tema escuro | ✅ Sistema/Claro/Escuro na Conta; escolha persistente no SQLite, schema v5 |
 | Alertas de preço-alvo | ⬜ |
-| Ordenação/filtro nas listas | ⬜ |
+| Ordenação/filtro nas listas | ✅ controles no Início, Favoritas e Carteira; filtro local preserva totais/alocação |
 
 ## 7. Qualidade contínua
 
