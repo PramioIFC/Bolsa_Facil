@@ -73,7 +73,11 @@ cp .env.example .env
 ```
 Abra o `.env` e coloque seu token: `BRAPI_TOKEN=seu_token_aqui`. Este token nunca vai ao navegador, sendo lido apenas pelo seu proxy local.
 
-Para **Android/Windows** nativo, configure também em `config/dart_defines.json` (copie de `config/dart_defines.example.json`).
+Para **Android/Windows** nativo, crie `config/dart_defines.json` a partir do exemplo e preencha `BRAPI_TOKEN`:
+```powershell
+Copy-Item config/dart_defines.example.json config/dart_defines.json
+```
+Esse arquivo é local e está ignorado pelo Git; não compartilhe nem versione o token.
 
 ### 3. Rodar o Backend e o Frontend
 **Via atalho (Windows):**
@@ -81,6 +85,12 @@ Para **Android/Windows** nativo, configure também em `config/dart_defines.json`
 .\run_web.ps1
 ```
 Este script subirá o backend local e o app Flutter no Chrome na porta 3000 automaticamente.
+
+**Android (aparelho ou emulador):**
+```powershell
+flutter run --dart-define-from-file=config/dart_defines.json
+```
+O `.env` configura apenas o proxy Web; o comando Android precisa carregar o token de `dart_defines.json`.
 
 **Modo Manual (Dois Terminais):**
 ```bash
