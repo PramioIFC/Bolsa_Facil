@@ -1,3 +1,10 @@
+# Remoção de Câmbio e Inflação — 07/10/2026
+
+- Removidos o botão da Home e a tela de Câmbio/Inflação, sem acesso no plano utilizado.
+- Teste da Home verifica ausência da seção e de consultas de câmbio/inflação; navegação em português passa a usar Alertas de preço.
+- Dividendos/JCP preservados, incluindo testes de pagamentos, erro, vazio e layout estreito em tema escuro.
+- Validação: formatação conferida, `flutter analyze` sem problemas e 180 testes passaram. Quatro testes exclusivos da tela removida foram retirados.
+
 # Localização completa dos controles
 
 - SDK `flutter_localizations` fixa pt-BR também nos controles padrão do Flutter, corrigindo o rótulo de navegação inglês.

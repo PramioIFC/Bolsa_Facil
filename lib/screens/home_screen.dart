@@ -11,7 +11,6 @@ import '../widgets/list_order_controls.dart';
 import '../widgets/stock_tile.dart';
 import 'stock_details_screen.dart';
 import 'price_alerts_screen.dart';
-import 'market_data_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.state});
@@ -108,14 +107,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               MaterialPageRoute(
                                   builder: (_) =>
                                       PriceAlertsScreen(state: widget.state)))),
-                      OutlinedButton.icon(
-                          icon: const Icon(Icons.currency_exchange),
-                          label: const Text('Câmbio e inflação'),
-                          onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      MarketDataScreen(state: widget.state)))),
                     ])),
                   ),
                   SliverPadding(

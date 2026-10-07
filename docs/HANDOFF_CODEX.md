@@ -10,6 +10,8 @@ Leia, nesta ordem: `TECHNICAL_DOCS.md` (arquitetura atual), `MELHORIAS.md` (o qu
 
 ## Estado atual — verificado em 06/10/2026
 
+Atualização em 07/10/2026: seção Câmbio/Inflação removida da interface por indisponibilidade no plano utilizado. `flutter analyze` sem problemas e 180 testes passaram; quatro testes exclusivos da tela removida foram retirados. Nenhum build ou teste manual de plataforma foi repetido nesta alteração.
+
 | Verificação | Resultado |
 |---|---|
 | `flutter pub get` e setup SQLite Web | passaram (`sqflite_common_ffi_web 1.2.0`) |
@@ -44,7 +46,7 @@ Comandos do smoke e da migração real estão em `TECHNICAL_DOCS.md`. Segurança
 2. **Concluída:** temas Sistema/Claro/Escuro com preferência SQLite (schema v5), cores adaptadas e Conta rolável.
 3. **Concluída:** alertas por conta, histórico persistente e notificações locais com permissão explícita; schema v6 e testes de migração/concorrência. Avaliação somente com o app aberto.
 4. **Concluída:** ordenação e filtro local em Início/Favoritas/Carteira, preservando totais/alocação.
-5. **Concluída:** dividendos/JCP e Câmbio/Inflação com contratos v2, consultas por demanda e tratamento de acesso negado. Câmbio/inflação retornam 403 com o token atual; sucesso coberto por fixtures.
+5. **Concluída:** dividendos/JCP com contratos v2 e consultas por demanda. Em 07/10/2026, o botão e a tela de Câmbio/Inflação foram removidos por falta de acesso no plano utilizado (403 com o token atual). Contratos internos e testes de serviço foram preservados.
 6. **Concluída:** PBKDF2 em isolate nativo / Web Crypto; schema v4 limita cinco falhas de login por 60 segundos. Migração e concorrência cobertas por testes; conta Web existente compatível.
 7. **Concluída:** detalhes atualizam `AppState.stocks`; seis testes de concorrência, erros e ciclo de vida.
 8. **Concluída:** testes de widget de tema, listas, alertas e dados adicionais.

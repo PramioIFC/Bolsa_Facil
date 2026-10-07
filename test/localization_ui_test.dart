@@ -1,7 +1,7 @@
 import 'package:bolsa_facil/database/app_database.dart';
 import 'package:bolsa_facil/main.dart';
 import 'package:bolsa_facil/models/user_account.dart';
-import 'package:bolsa_facil/screens/market_data_screen.dart';
+import 'package:bolsa_facil/screens/price_alerts_screen.dart';
 import 'package:bolsa_facil/state/app_state.dart';
 import 'package:bolsa_facil/state/settings_state.dart';
 import 'package:flutter/material.dart';
@@ -31,16 +31,16 @@ void main() {
     // BolsaFacilApp owns and disposes the injected states; no database is opened.
     await tester.pumpWidget(BolsaFacilApp(state: state, settings: settings));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Câmbio e inflação'));
+    await tester.tap(find.text('Alertas de preço'));
     await tester.pumpAndSettle();
-    expect(find.byType(MarketDataScreen), findsOneWidget);
+    expect(find.byType(PriceAlertsScreen), findsOneWidget);
     expect(find.byTooltip('Voltar'), findsOneWidget);
     expect(find.byTooltip('Back'), findsNothing);
     expect(Localizations.localeOf(tester.element(find.byTooltip('Voltar'))),
         const Locale('pt', 'BR'));
     await tester.tap(find.byTooltip('Voltar'));
     await tester.pumpAndSettle();
-    expect(find.byType(MarketDataScreen), findsNothing);
+    expect(find.byType(PriceAlertsScreen), findsNothing);
     expect(find.text('Bolsa Fácil'), findsOneWidget);
   });
 }
