@@ -186,7 +186,7 @@ void main() {
             state: state, initialStock: state.stocks.single)));
     await tester.pumpAndSettle();
     expect(state.dividendsCalls, 0);
-    expect(find.text('Dividend Yield: 5,00%'), findsOneWidget);
+    expect(find.text('Rendimento de dividendos: 5,00%'), findsOneWidget);
     expect(find.textContaining('Se você investir'), findsNothing);
     await tester.tap(find.text('Dividendos e JCP'));
     await tester.pumpAndSettle();

@@ -14,7 +14,7 @@ Leia, nesta ordem: `TECHNICAL_DOCS.md` (arquitetura atual), `MELHORIAS.md` (o qu
 |---|---|
 | `flutter pub get` e setup SQLite Web | passaram (`sqflite_common_ffi_web 1.2.0`) |
 | `flutter analyze` | No issues found |
-| `flutter test` | 183 testes passaram |
+| `flutter test` | 184 testes passaram |
 | Build Web release (base 8080 e 8081) | passou |
 | Web em uso real | cadastro, favorito, compra/venda/histórico, F5 com sessão/carteira e cache sem proxy passaram |
 | Autocomplete na API real | `stocks[].stock/name/logo` confirmado; `/v2/tickers` também respondeu, mas o endpoint atual foi mantido |
@@ -66,4 +66,4 @@ Comandos do smoke e da migração real estão em `TECHNICAL_DOCS.md`. Segurança
 
 ## Prompt sugerido para colar no Codex
 
-> Leia `AGENTS.md`, `docs/HANDOFF_CODEX.md`, `TECHNICAL_DOCS.md` e `MELHORIAS.md`. O projeto está com `flutter analyze` limpo e 183 testes passando. Confira o estado verificado e as limitações do handoff. Repita as verificações afetadas por alterações e corrija falhas com regressões quando possível. Mantenha Flutter + brapi + SQLite, UI em português, e rode analyze e test a cada mudança.
+> Leia `AGENTS.md`, `docs/HANDOFF_CODEX.md`, `TECHNICAL_DOCS.md` e `MELHORIAS.md`. O projeto está com `flutter analyze` limpo e 184 testes passando. Confira o estado verificado e as limitações do handoff. Repita as verificações afetadas por alterações e corrija falhas com regressões quando possível. Mantenha Flutter + brapi + SQLite, UI em português, e rode analyze e test a cada mudança.

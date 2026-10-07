@@ -303,7 +303,7 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                             ]),
                             const SizedBox(height: 12),
                             Text(
-                                'Dividend Yield: ${formatPercent(current.dividendYield! * 100, signed: false)}',
+                                'Rendimento de dividendos: ${formatPercent(current.dividendYield! * 100, signed: false)}',
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w800, fontSize: 16)),
                           ]))),

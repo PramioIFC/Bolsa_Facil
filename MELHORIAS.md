@@ -1,3 +1,9 @@
+# Localização completa dos controles
+
+- SDK `flutter_localizations` fixa pt-BR também nos controles padrão do Flutter, corrigindo o rótulo de navegação inglês.
+- Indicador dos detalhes traduzido para Rendimento de dividendos.
+- Regressão com dispositivo em inglês; analyze limpo e 184 testes passaram.
+
 # Dividendos, câmbio e inflação — 06/10/2026
 
 - Telas de proventos informados por ação e Câmbio/Inflação, com carregamento por tela/aba, vazio, erro e nova tentativa.
@@ -142,3 +148,5 @@ Legenda: ✅ implementado (não executado) · 🟡 parcial · ⬜ não feito.
 - "Remover" uma posição agora também apaga o histórico de operações dela.
 - Editar uma posição manualmente registra um `ajuste` no histórico.
 - Pull-to-refresh ignora o cache; abrir o app/logar usa o cache de até 5 min.
+
+Builds finais após a localização: Web release (Wasm), Windows release e APK Android debug passaram. O botão Voltar também foi confirmado no navegador real, mantendo sessão e dados após recarregar.

@@ -62,7 +62,7 @@ Início e Favoritas ordenam por código, preço ou variação. Carteira ordena p
 
 ## Aparência
 
-Conta → **Aparência** oferece Sistema, Claro e Escuro. A escolha fica no SQLite deste dispositivo/navegador e permanece ao sair da conta.
+Conta → **Aparência** oferece Sistema, Claro e Escuro. A escolha fica no SQLite deste dispositivo/navegador e permanece ao sair da conta. O idioma da interface e dos controles padrão é português do Brasil, independente do idioma do dispositivo.
 
 ## Ambiente verificado e validação
 

@@ -10,7 +10,7 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 | API externa | brapi.dev: `/api/quote/{ticker}` e `/api/quote/list`; `/api/v2/stocks/dividends`, `/api/v2/currency`, `/api/v2/macro/latest` |
 | Gráficos | `fl_chart ^0.69.0` (linha no histórico, pizza na alocação) |
 
-> **Verificação em 05/10/2026:** `flutter analyze` limpo; 183 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
+> **Verificação em 06/10/2026:** `flutter analyze` limpo; 184 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
 
 ---
 
@@ -248,7 +248,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | `test/app_state_test.dart` | Fluxos de registro, sessão, favoritos, compra/venda, backup |
 | `test/widget_test.dart` | `AuthScreen` |
 
-Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 183 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
+Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 184 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
 
 ## 9. Verificações reproduzíveis por plataforma
 
@@ -332,3 +332,9 @@ flutter run -d <emulador> -t tool/platform_smoke.dart
 Os limites alteram somente recursos da compilação, sem desabilitar validação. Referências: [configuração de memória Gradle](https://docs.gradle.org/current/userguide/build_environment.html), [execução do compilador Kotlin](https://kotlinlang.org/docs/compiler-execution-strategy.html).
 
 Builds finais das telas adicionais: Web release (com Wasm dry run), Windows release e APK Android debug passaram. Navegador: dividendos/JCP de PETR4 exibiram valores por ação e datas da API; abas de câmbio e inflação exibiram o erro de acesso 403 com nova tentativa. A prévia utilizou arquivos versionados para evitar scripts antigos do cache, mantendo a mesma origem e a sessão SQLite.
+
+### Localização dos controles
+
+`MaterialApp` fixa `pt_BR` e usa os delegates do `flutter_localizations` fornecido pelo SDK. Tooltips de navegação, diálogos e controles padrão deixam de usar inglês. O indicador dos detalhes é apresentado como **Rendimento de dividendos**. `test/localization_ui_test.dart` abre uma tela real com o dispositivo em inglês e confirma o botão **Voltar**, o locale brasileiro e o retorno à Home. Analyze limpo e 184 testes passaram.
+
+Builds finais após a localização: Web release (Wasm), Windows release e APK Android debug passaram. O botão Voltar também foi confirmado no navegador real, mantendo sessão e dados após recarregar.

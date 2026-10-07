@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'database/app_database.dart';
 import 'database/db_factory.dart';
@@ -51,6 +52,9 @@ class _BolsaFacilAppState extends State<BolsaFacilApp> {
         animation: settings,
         builder: (context, _) => MaterialApp(
           title: 'Bolsa Fácil',
+          locale: const Locale('pt', 'BR'),
+          supportedLocales: const [Locale('pt', 'BR')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
           debugShowCheckedModeBanner: false,
           theme: buildTheme(),
           darkTheme: buildTheme(brightness: Brightness.dark),
