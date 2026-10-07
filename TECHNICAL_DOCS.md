@@ -16,6 +16,14 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 
 ## 1. Arquitetura
 
+### Identidade e inicialização
+
+Os assets de marca estão em `assets/branding`. O ícone é aplicado ao launcher Android (incluindo máscara adaptativa), ao executável Windows e ao favicon/manifest Web. `python tool/generate_branding.py` exporta os tamanhos a partir das fontes aprovadas (requer Pillow).
+
+`main()` configura a fábrica SQLite e abre a interface antes de ler as preferências. `SplashScreen` mostra a arte enviada em fundo preto, indicador e “Carregando...” enquanto `AppState.initializing` ou `SettingsState.initializing` estiver ativo. Depois segue para login ou `AppShell`; não há tempo mínimo artificial nem espera pelas cotações. Android tem abertura nativa antes do primeiro frame, com recursos específicos para API 31+; a Web mostra a mesma arte no HTML até `flutter-first-frame`. Referências: [splash Android](https://developer.android.com/develop/ui/views/launch/splash-screen), [inicialização Web Flutter](https://docs.flutter.dev/platform-integration/web/initialization).
+
+`test/splash_screen_test.dart` verifica espera pelo tema/sessão, destino com e sem autenticação e layout pequeno com texto ampliado. Não há diretórios iOS/macOS neste checkout; os recursos nativos dessas plataformas não foram adicionados.
+
 | Camada | Pasta | Responsabilidade |
 |---|---|---|
 | Screens / Widgets | `lib/screens`, `lib/widgets` | UI; chamam apenas o `AppState` |

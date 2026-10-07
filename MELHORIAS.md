@@ -1,3 +1,11 @@
+# Ícone e splash — 07/10/2026
+
+- Marca enviada integrada à splash Flutter/Web; monograma adaptado para ícones Android, Windows e Web.
+- A interface abre antes da leitura do tema e aguarda sessão/preferências na splash, sem atraso artificial e sem bloquear por cotações.
+- Recursos nativos Android antes do primeiro frame, incluindo Android 12+, e ícone adaptativo. Fontes e exportador reproduzível em `assets/branding` e `tool/generate_branding.py`.
+- Validação: `flutter analyze` sem problemas e 183 testes passaram, incluindo três novos testes de splash.
+- Builds Web release, Windows release e APK Android debug passaram. No navegador real, a abertura chegou ao login e a splash HTML foi removida. Abertura nativa não conferida visualmente em dispositivo.
+
 # Remoção de Câmbio e Inflação — 07/10/2026
 
 - Removidos o botão da Home e a tela de Câmbio/Inflação, sem acesso no plano utilizado.

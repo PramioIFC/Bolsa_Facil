@@ -10,6 +10,8 @@ Leia, nesta ordem: `TECHNICAL_DOCS.md` (arquitetura atual), `MELHORIAS.md` (o qu
 
 ## Estado atual — verificado em 06/10/2026
 
+Atualização de identidade em 07/10/2026: ícones Android/Windows/Web e splash com a imagem enviada. A splash aguarda sessão e tema sem esperar cotações. `flutter analyze` sem problemas; 183 testes passaram; builds Web release, Windows release e APK Android debug passaram. Navegador real abriu o login e confirmou remoção da splash HTML após o primeiro frame. Aparência da abertura nativa Android/Windows não foi conferida em dispositivo nesta alteração. Fontes/exportador: `assets/branding` e `tool/generate_branding.py`.
+
 Atualização em 07/10/2026: seção Câmbio/Inflação removida da interface por indisponibilidade no plano utilizado. `flutter analyze` sem problemas e 180 testes passaram; quatro testes exclusivos da tela removida foram retirados. Nenhum build ou teste manual de plataforma foi repetido nesta alteração.
 
 | Verificação | Resultado |

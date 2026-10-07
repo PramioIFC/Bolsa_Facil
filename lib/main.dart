@@ -5,6 +5,7 @@ import 'database/app_database.dart';
 import 'database/db_factory.dart';
 import 'screens/app_shell.dart';
 import 'screens/auth_screen.dart';
+import 'screens/splash_screen.dart';
 import 'services/brapi_service.dart';
 import 'state/app_state.dart';
 import 'state/settings_state.dart';
@@ -13,9 +14,7 @@ import 'theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initDatabaseFactory();
-  final settings = SettingsState(AppDatabase.instance);
-  await settings.initialize();
-  runApp(BolsaFacilApp(settings: settings));
+  runApp(const BolsaFacilApp());
 }
 
 class BolsaFacilApp extends StatefulWidget {
@@ -62,9 +61,8 @@ class _BolsaFacilAppState extends State<BolsaFacilApp> {
           home: AnimatedBuilder(
             animation: state.authState,
             builder: (context, _) {
-              if (state.initializing) {
-                return const Scaffold(
-                    body: Center(child: CircularProgressIndicator()));
+              if (state.initializing || settings.initializing) {
+                return const SplashScreen();
               }
               return state.isAuthenticated
                   ? AppShell(state: state, settings: settings)
