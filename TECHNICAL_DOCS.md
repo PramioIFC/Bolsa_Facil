@@ -7,10 +7,10 @@ Aplicativo Flutter para acompanhar ações da B3, favoritar ativos e simular uma
 | Pacote / SDK | `bolsa_facil 1.0.0+1` · Dart `>=3.3.0 <4.0.0` |
 | Estados | `AuthState`, `MarketState`, `PortfolioState` e `AlertState`; `AppState` coordena e mantém a interface pública, com injeção por construtor |
 | Persistência | SQLite: `sqflite` (Android/iOS), `sqflite_common_ffi` (desktop), `sqflite_common_ffi_web` (Web, Wasm) |
-| API externa | brapi.dev: `/api/quote/{ticker}` e `/api/quote/list` |
+| API externa | brapi.dev: `/api/quote/{ticker}` e `/api/quote/list`; `/api/v2/stocks/dividends`, `/api/v2/currency`, `/api/v2/macro/latest` |
 | Gráficos | `fl_chart ^0.69.0` (linha no histórico, pizza na alocação) |
 
-> **Verificação em 05/10/2026:** `flutter analyze` limpo; 150 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
+> **Verificação em 05/10/2026:** `flutter analyze` limpo; 183 testes passando; builds Web release, Windows release e APK Android debug concluídos. Web verificada em uso real: cadastro, favorito, compra, venda, histórico, sessão/carteira após F5 e cache com proxy desligado. Migração de uma cópia do banco v1 real passou; o original foi preservado. SQLite Windows passou na verificação de sessão, operações e backup. SQLite Android também passou na mesma verificação de dados. Não confundir build ou smoke test de dados com validação visual completa das plataformas nativas.
 
 ---
 
@@ -248,7 +248,7 @@ Execução: `cp .env.example .env` (preencher), depois `dart run tool/brapi_prox
 | `test/app_state_test.dart` | Fluxos de registro, sessão, favoritos, compra/venda, backup |
 | `test/widget_test.dart` | `AuthScreen` |
 
-Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 150 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
+Os testes usam SQLite FFI em memória e `MockClient` (sem rede). Estado atual: 183 testes passando. `test/ui_flows_test.dart` cobre venda/histórico/alocação, cache e falhas na Home, rollback de favorito e backup na Conta.
 
 ## 9. Verificações reproduzíveis por plataforma
 
@@ -304,3 +304,31 @@ Web release das listas passou. No navegador: ordem Maior preço colocou VALE3/PE
 `flutter_local_notifications 22.3.1` (BSD-3-Clause) oferece entrega imediata para Android/Windows/Web; inicialização não solicita permissão. A UI solicita permissão explicitamente. Android usa Java/Kotlin 17 e desugaring 2.1.4. Web exige contexto seguro e utiliza o worker fornecido pelo plugin. O app declara `flutter_web_plugins` do SDK, pois a implementação Web 1.0.0 não o declara e o registrador gerado precisa dele. Nenhum agendamento, permissão de alarme exato ou receiver de boot foi acrescentado. Referências: [pacote e documentação](https://pub.dev/packages/flutter_local_notifications/versions/22.3.1), [implementação Web](https://pub.dev/packages/flutter_local_notifications_web).
 
 Testes de alertas cobrem migração/preservação, CRUD por conta, backup, concorrência, cache versus rede, sessão e descarte, além de permissão negada e falhas de entrega com plugin falso.
+
+Alertas: Web release e Wasm dry run, Windows release e APK Android debug passaram. Na Web, um alerta PETR4 foi criado, acionado por cotação real e permaneceu no histórico após F5, com sessão e tema preservados. A permissão do sistema não foi concedida durante o teste; a entrega visual das notificações nativas permanece sem verificação manual.
+
+### Dados adicionais da brapi
+
+`market_data.dart` modela proventos em dinheiro, pares de moedas e indicadores de inflação. `BrapiService.getDividends/getCurrencies/getInflation` usam os envelopes documentados: `results[].data.cashDividends`, `currency[]` e `results[].series/latest`. Números de câmbio recebidos como texto são convertidos e validados; ausência não vira zero. Valores nulos de `latest` e datas não informadas permanecem ausentes. O timestamp de câmbio é UTC e exibido no horário local; indicadores mensais usam o período de referência.
+
+Câmbio/inflação são carregados ao abrir a tela/selecionar a aba, com estado independente de carregamento, vazio, erro e nova tentativa. Dividendos exibem pagamentos em dinheiro por ação; a projeção anterior foi substituída pelo acesso aos registros. Dividend Yield permanece um indicador separado. Nenhuma nova tabela ou mudança do schema é necessária.
+
+O proxy permite apenas as três novas rotas exatas, com parâmetros específicos e validação dos valores. O token permanece no header do upstream. Redirects não são seguidos nem repassados, e corpos de erro do upstream são substituídos por mensagem genérica para evitar exposição de conteúdo sensível. A inicialização programática aceita um upstream loopback para testes; o CLI continua fixo em brapi.dev.
+
+Referências oficiais: [dividendos](https://brapi.dev/docs/acoes/dividendos), [câmbio](https://brapi.dev/docs/moedas), [indicadores atuais](https://brapi.dev/docs/macro/latest), [versionamento](https://brapi.dev/docs/versioning). O endpoint legado de inflação foi descontinuado, por isso não é utilizado.
+
+Verificação real em 06/10/2026 pelo proxy: PETR4 respondeu 200 com 176 proventos; câmbio e inflação responderam 403 com o token configurado. Casos de sucesso para esses dois serviços são verificados com fixtures determinísticas; acesso real permanece limitado pela API.
+
+Validação final de persistência: `tool/platform_smoke.dart` passou em Windows e Android com schema v6, incluindo preferência de tema, alertas, disparo idempotente e backup. A cópia do banco v1 real migrou diretamente para v6, com teste de integridade e preservação dos dados.
+
+No computador de 8 GB, a execução Android foi repetida com emulador de 1 GB e limites de memória por processo, preservando `android/gradle.properties`. Configuração utilizada nesta sessão:
+
+```powershell
+$env:GRADLE_OPTS='-Dorg.gradle.jvmargs="-Xmx1536m -XX:MaxMetaspaceSize=512m" -Dorg.gradle.workers.max=1'
+[Environment]::SetEnvironmentVariable('ORG_GRADLE_PROJECT_kotlin.compiler.execution.strategy','in-process','Process')
+flutter run -d <emulador> -t tool/platform_smoke.dart
+```
+
+Os limites alteram somente recursos da compilação, sem desabilitar validação. Referências: [configuração de memória Gradle](https://docs.gradle.org/current/userguide/build_environment.html), [execução do compilador Kotlin](https://kotlinlang.org/docs/compiler-execution-strategy.html).
+
+Builds finais das telas adicionais: Web release (com Wasm dry run), Windows release e APK Android debug passaram. Navegador: dividendos/JCP de PETR4 exibiram valores por ação e datas da API; abas de câmbio e inflação exibiram o erro de acesso 403 com nova tentativa. A prévia utilizou arquivos versionados para evitar scripts antigos do cache, mantendo a mesma origem e a sessão SQLite.

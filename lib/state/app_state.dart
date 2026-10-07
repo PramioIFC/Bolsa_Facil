@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../database/app_database.dart';
 import '../models/portfolio_item.dart';
 import '../models/stock.dart';
+import '../models/market_data.dart';
 import '../models/trade.dart';
 import '../models/user_account.dart';
 import '../services/brapi_service.dart';
@@ -223,6 +224,15 @@ class AppState extends ChangeNotifier {
       marketState.loadQuote(symbol, range: range);
   Future<List<TickerSuggestion>> suggest(String query) =>
       marketState.suggest(query);
+  Future<List<CashDividend>> getDividends(String symbol) =>
+      brapiService.getDividends(symbol);
+  Future<List<CurrencyQuote>> getCurrencies({
+    List<String> pairs = const ['USD-BRL', 'EUR-BRL'],
+  }) =>
+      brapiService.getCurrencies(pairs: pairs);
+  Future<List<InflationIndicator>> getInflation() =>
+      brapiService.getInflation();
+
   Future<void> toggleFavorite(String symbol) =>
       portfolioState.toggleFavorite(symbol);
 

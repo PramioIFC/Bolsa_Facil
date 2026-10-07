@@ -11,6 +11,7 @@ import '../widgets/list_order_controls.dart';
 import '../widgets/stock_tile.dart';
 import 'stock_details_screen.dart';
 import 'price_alerts_screen.dart';
+import 'market_data_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.state});
@@ -98,17 +99,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
                     sliver: SliverToBoxAdapter(
-                        child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.notifications_outlined),
-                              label: const Text('Alertas de preço'),
-                              onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => PriceAlertsScreen(
-                                          state: widget.state))),
-                            ))),
+                        child: Wrap(spacing: 10, runSpacing: 8, children: [
+                      OutlinedButton.icon(
+                          icon: const Icon(Icons.notifications_outlined),
+                          label: const Text('Alertas de preço'),
+                          onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      PriceAlertsScreen(state: widget.state)))),
+                      OutlinedButton.icon(
+                          icon: const Icon(Icons.currency_exchange),
+                          label: const Text('Câmbio e inflação'),
+                          onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      MarketDataScreen(state: widget.state)))),
+                    ])),
                   ),
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),

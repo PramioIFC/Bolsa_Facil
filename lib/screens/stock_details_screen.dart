@@ -7,6 +7,7 @@ import '../theme.dart';
 import '../utils/format.dart';
 import '../widgets/stock_tile.dart';
 import 'price_alerts_screen.dart';
+import 'dividends_screen.dart';
 
 class StockDetailsScreen extends StatefulWidget {
   const StockDetailsScreen(
@@ -123,6 +124,15 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                             fontWeight: FontWeight.w800)),
                   )),
             ]),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+                icon: const Icon(Icons.payments_outlined),
+                label: const Text('Dividendos e JCP'),
+                onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => DividendsScreen(
+                            state: widget.state, symbol: current.symbol)))),
             const SizedBox(height: 26),
             Card(
                 child: Padding(
@@ -293,17 +303,9 @@ class _StockDetailsScreenState extends State<StockDetailsScreen> {
                             ]),
                             const SizedBox(height: 12),
                             Text(
-                                'Dividend Yield: ${(current.dividendYield! * 100).toStringAsFixed(2)}%',
+                                'Dividend Yield: ${formatPercent(current.dividendYield! * 100, signed: false)}',
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w800, fontSize: 16)),
-                            const SizedBox(height: 8),
-                            Text(
-                                'Se você investir R\$ 1.000 hoje, a projeção com base no último ano é receber aproximadamente R\$ ${(1000 * current.dividendYield!).toStringAsFixed(2)} em proventos nos próximos 12 meses.',
-                                style: TextStyle(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                    height: 1.4)),
                           ]))),
             ],
             const SizedBox(height: 16),

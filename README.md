@@ -50,7 +50,7 @@ O CI (`.github/workflows/ci.yml`) roda análise, testes e `flutter build web`.
 
 ## Proxy (`tool/brapi_proxy.dart`)
 
-Só encaminha `GET /api/quote/{ticker}` para a brapi, injetando o token. Escuta em `127.0.0.1:8080` por padrão, aceita CORS apenas de `localhost`/`127.0.0.1` e limita 120 req/min por IP. Variáveis: `BRAPI_TOKEN`, `PROXY_HOST`, `PORT`, `ALLOWED_ORIGINS`, `RATE_LIMIT`.
+Encaminha cotações/autocomplete e rotas específicas de dividendos, câmbio e inflação para a brapi, injetando o token no header. Escuta em `127.0.0.1:8080` por padrão, aceita CORS apenas de `localhost`/`127.0.0.1` e limita 120 req/min por IP. Variáveis: `BRAPI_TOKEN`, `PROXY_HOST`, `PORT`, `ALLOWED_ORIGINS`, `RATE_LIMIT`.
 
 ## Backup
 
@@ -83,3 +83,9 @@ A verificação de plataforma usa banco descartável e confirma SQLite/sessão/c
 Início → **Alertas** ou detalhes do ativo → **Criar alerta**. Escolha um alvo de alta ou queda. Cada alerta dispara uma vez ao receber uma cotação da rede com o app aberto; editar e rearmar permite outro disparo. O histórico fica no SQLite da conta, inclusive após recarregar a página.
 
 **Ativar notificações** solicita a permissão do sistema. O histórico funciona mesmo com permissão negada. Não há monitoramento em segundo plano. Notificações Web dependem de contexto seguro e suporte do navegador; Android e Windows usam notificações locais.
+
+## Dividendos, câmbio e inflação
+
+Início → **Câmbio e inflação** mostra USD/BRL, EUR/BRL e indicadores IPCA, IPCA acumulado em 12 meses e IGP-M. Cada aba consulta a rede ao ser aberta; os valores mostram sua data de referência. Detalhes da ação → **Dividendos e JCP** abre a lista de proventos em dinheiro por ação, com data-com, data ex e pagamento quando informados.
+
+O acesso depende do token/plano da brapi. Quando a API nega acesso, a tela informa o erro e oferece nova tentativa. Essas consultas não alteram a carteira simulada. Inflação usa a rota atual `/api/v2/macro/latest`, e os pagamentos vêm de `/api/v2/stocks/dividends`.

@@ -1,3 +1,12 @@
+# Dividendos, câmbio e inflação — 06/10/2026
+
+- Telas de proventos informados por ação e Câmbio/Inflação, com carregamento por tela/aba, vazio, erro e nova tentativa.
+- Contratos v2 com validação de valores finitos, números como texto e datas nulas; macro/latest substitui a API legada de inflação.
+- Proxy permite somente novas rotas exatas e seus parâmetros; bloqueia redirects e protege conteúdo dos erros.
+- Trinta e três testes acrescentados: 16 de contratos, nove HTTP locais do proxy e oito de widgets. Analyze limpo e 183 testes passaram.
+- Builds Web/Windows/Android passaram. SQLite schema v6 passou nos dois smokes nativos e na migração de uma cópia v1 real.
+- API real: PETR4 retornou 176 proventos; câmbio e inflação negaram acesso com HTTP 403 usando o token atual.
+
 # Alertas de preço
 
 - Alertas por conta com alvo de alta/queda, edição para rearmar e histórico persistente.

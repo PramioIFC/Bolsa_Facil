@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/stock.dart';
+import '../models/market_data.dart';
 
 /// Motivo pelo qual uma cotação não pôde ser obtida.
 enum QuoteFailure { notFound, rateLimited, unauthorized, network, other }
@@ -237,13 +238,136 @@ class BrapiService {
     return Duration(milliseconds: millis.clamp(0, 5000).toInt());
   }
 
+  /// Proventos em dinheiro da API v2; não altera a cotação nem o cache local.
+  Future<List<CashDividend>> getDividends(String symbol) async {
+    final normalized = symbol.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z0-9^.\-]{1,32}$').hasMatch(normalized)) {
+      throw const BrapiException('Informe um código de ação válido.');
+    }
+    final data = await _getMarketData('/v2/stocks/dividends', {
+      'symbols': normalized,
+      'sortBy': 'paymentDate',
+      'sortOrder': 'desc',
+    });
+    try {
+      final results = data['results'] as List;
+      if (results.isEmpty) return const [];
+      if (results.length != 1) throw const FormatException();
+      final result = results.single as Map<String, dynamic>;
+      final actual = result['symbol'];
+      if (result['requestedSymbol'] != normalized ||
+          actual is! String ||
+          !RegExp(r'^[A-Z0-9^.\-]{1,32}$').hasMatch(actual) ||
+          (actual != normalized && result['changed'] != true)) {
+        throw const FormatException();
+      }
+      final payload = result['data'] as Map<String, dynamic>;
+      return (payload['cashDividends'] as List)
+          .map((item) =>
+              CashDividend.fromJson(actual, item as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      throw _invalidMarketData();
+    }
+  }
+
+  Future<List<CurrencyQuote>> getCurrencies({
+    List<String> pairs = const ['USD-BRL', 'EUR-BRL'],
+  }) async {
+    final requested = pairs.map((pair) => pair.trim().toUpperCase()).toSet();
+    if (requested.isEmpty) return const [];
+    if (requested
+        .any((pair) => !RegExp(r'^[A-Z]{3}-[A-Z]{3}$').hasMatch(pair))) {
+      throw const BrapiException('Informe um par de moedas válido.');
+    }
+    final data =
+        await _getMarketData('/v2/currency', {'currency': requested.join(',')});
+    try {
+      final seen = <String>{};
+      return (data['currency'] as List).map((item) {
+        final quote = CurrencyQuote.fromJson(item as Map<String, dynamic>);
+        final pair = '${quote.fromCurrency}-${quote.toCurrency}';
+        if (!requested.contains(pair) ||
+            !seen.add(pair) ||
+            quote.bidPrice <= 0 ||
+            quote.askPrice <= 0) {
+          throw const FormatException();
+        }
+        return quote;
+      }).toList();
+    } catch (_) {
+      throw _invalidMarketData();
+    }
+  }
+
+  Future<List<InflationIndicator>> getInflation() async {
+    const slugs = ['ipca', 'ipca12m', 'igpm'];
+    final data =
+        await _getMarketData('/v2/macro/latest', {'symbols': slugs.join(',')});
+    try {
+      final seen = <String>{};
+      return (data['results'] as List).map((item) {
+        final indicator =
+            InflationIndicator.fromJson(item as Map<String, dynamic>);
+        if (!slugs.contains(indicator.slug) || !seen.add(indicator.slug)) {
+          throw const FormatException();
+        }
+        return indicator;
+      }).toList();
+    } catch (_) {
+      throw _invalidMarketData();
+    }
+  }
+
+  BrapiException _invalidMarketData() => const BrapiException(
+      'A brapi retornou dados financeiros inválidos. Tente novamente.',
+      failure: QuoteFailure.other);
+
+  Future<Map<String, dynamic>> _getMarketData(
+      String path, Map<String, String> query) async {
+    final uri = Uri.parse('$_baseUrl$path').replace(queryParameters: query);
+    for (var attempt = 0;; attempt++) {
+      http.Response response;
+      try {
+        response = await _client.get(uri, headers: _headers).timeout(_timeout);
+      } on Exception {
+        throw BrapiException(brapiMessageFor(QuoteFailure.network),
+            failure: QuoteFailure.network);
+      }
+      if (response.statusCode == 429 && attempt < maxRetries) {
+        await _delay(_retryDelay(response, attempt));
+        continue;
+      }
+      final failure = switch (response.statusCode) {
+        200 => null,
+        401 || 402 || 403 => QuoteFailure.unauthorized,
+        404 => QuoteFailure.notFound,
+        429 => QuoteFailure.rateLimited,
+        _ => QuoteFailure.other,
+      };
+      if (failure != null) {
+        throw BrapiException(
+            failure == QuoteFailure.notFound
+                ? 'Dados financeiros não encontrados.'
+                : brapiMessageFor(failure),
+            failure: failure);
+      }
+      try {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (_) {
+        throw _invalidMarketData();
+      }
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Busca de tickers (autocomplete)
   // ---------------------------------------------------------------------------
 
   /// Busca tickers por `GET /quote/list?search=`. Nunca lança: em qualquer
   /// falha devolve lista vazia (o autocomplete é apenas uma conveniência).
-  Future<List<TickerSuggestion>> searchTickers(String query, {int limit = 8}) async {
+  Future<List<TickerSuggestion>> searchTickers(String query,
+      {int limit = 8}) async {
     final term = query.trim();
     if (term.length < 2) return const [];
     final uri = Uri.parse('$_baseUrl/quote/list').replace(queryParameters: {
@@ -251,14 +375,19 @@ class BrapiService {
       'limit': '$limit',
     });
     try {
-      final response = await _client.get(uri, headers: _headers).timeout(_timeout);
+      final response =
+          await _client.get(uri, headers: _headers).timeout(_timeout);
       if (response.statusCode != 200) return const [];
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final seen = <String>{};
       final suggestions = <TickerSuggestion>[];
       for (final item in (data['stocks'] as List<dynamic>? ?? [])) {
         if (item is! Map<String, dynamic>) continue;
-        final symbol = (item['stock'] ?? item['symbol'])?.toString().trim().toUpperCase() ?? '';
+        final symbol = (item['stock'] ?? item['symbol'])
+                ?.toString()
+                .trim()
+                .toUpperCase() ??
+            '';
         if (symbol.isEmpty || !seen.add(symbol)) continue;
         suggestions.add(TickerSuggestion(
           symbol: symbol,
