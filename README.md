@@ -817,5 +817,5 @@ Este projeto é de uso privado.
 ---
 
 <p align="center">
-  Feito com 💜 usando Flutter
+  Feito com Flutter
 </p>
