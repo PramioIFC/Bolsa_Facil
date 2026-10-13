@@ -39,7 +39,6 @@ As cotações são fornecidas pela [brapi.dev](https://brapi.dev/), uma API bras
 > **📚 Documentação complementar:**
 > - [`TECHNICAL_DOCS.md`](TECHNICAL_DOCS.md) — Documentação técnica detalhada
 > - [`MELHORIAS.md`](MELHORIAS.md) — Changelog de melhorias desta versão
-> - [`docs/HANDOFF_CODEX.md`](docs/HANDOFF_CODEX.md) — Handoff para continuidade
 
 ---
 
