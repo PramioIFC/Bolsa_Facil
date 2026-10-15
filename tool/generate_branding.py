@@ -4,7 +4,7 @@ from shutil import copyfile
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-source = Image.open(ROOT / 'assets/branding/app_icon.png').convert('RGB')
+source = Image.open(ROOT / 'assets/branding/app_icon.png').convert('RGBA')
 
 
 def export(relative, size):
@@ -25,6 +25,7 @@ for size in (192, 512):
     export(f'web/icons/Icon-{size}.png', size)
     export(f'web/icons/Icon-maskable-{size}.png', size)
 export('web/favicon.png', 32)
+
 copyfile(ROOT / 'assets/branding/splash.png', ROOT / 'web/splash.png')
 source.save(ROOT / 'windows/runner/resources/app_icon.ico',
             sizes=[(s, s) for s in (16, 24, 32, 48, 64, 128, 256)])

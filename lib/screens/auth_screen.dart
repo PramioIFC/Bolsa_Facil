@@ -67,15 +67,14 @@ class _AuthScreenState extends State<AuthScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Align(
-                          child: Container(
-                            padding: const EdgeInsets.all(15),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary,
-                              borderRadius: BorderRadius.circular(18),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Image.asset(
+                              'assets/branding/app_icon.png',
+                              width: 52,
+                              height: 52,
+                              semanticLabel: 'Logo Bolsa Fácil',
                             ),
-                            child: Icon(Icons.trending_up_rounded,
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                size: 32),
                           ),
                         ),
                         const SizedBox(height: 18),

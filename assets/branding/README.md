@@ -1,10 +1,8 @@
 # Identidade e abertura
 
-`splash.png` é a imagem original enviada pelo usuário. `app_icon.png` foi adaptado com a ferramenta integrada ImageGen para exibir apenas o símbolo em tamanhos pequenos.
+`app_icon.png` é a marca compacta do aplicativo, com o símbolo B e a seta verde. `splash.png` é a arte de abertura original, que também é copiada para a Web.
 
-Prompt usado: preservar a silhueta do B violeta e a seta verde da referência; remover o texto; aumentar a clareza; centralizar em fundo quase preto, com o símbolo nos 60% centrais e margem para máscaras circulares; sem moldura externa.
-
-Para atualizar os tamanhos de Android, Windows e Web após substituir as fontes:
+Para atualizar os tamanhos de ícone Android, Windows e Web após substituir `app_icon.png`:
 
 ```powershell
 python -m pip install Pillow

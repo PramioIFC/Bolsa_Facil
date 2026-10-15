@@ -229,13 +229,15 @@ class _Header extends StatelessWidget {
   const _Header();
   @override
   Widget build(BuildContext context) => Row(children: [
-        Container(
-            padding: const EdgeInsets.all(11),
-            decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(14)),
-            child: Icon(Icons.trending_up_rounded,
-                color: Theme.of(context).colorScheme.onPrimary)),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Image.asset(
+            'assets/branding/app_icon.png',
+            width: 46,
+            height: 46,
+            semanticLabel: 'Logo Bolsa Fácil',
+          ),
+        ),
         const SizedBox(width: 12),
         Expanded(
             child:
